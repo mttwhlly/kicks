@@ -13,5 +13,9 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export default function Home() {
-  return <Button variant="contained">Hello world</Button>;
+  return (
+    <Button variant="contained" className="text-3xl">
+      Hello world
+    </Button>
+  );
 }
