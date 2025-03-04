@@ -1,13 +1,17 @@
-import type { Route } from "./+types/home";
-import { Welcome } from "../welcome/welcome";
+import type { Route } from './+types/home';
+import { Button } from '@mui/material';
 
 export function meta({}: Route.MetaArgs) {
   return [
-    { title: "New React Router App" },
-    { name: "description", content: "Welcome to React Router!" },
+    { title: 'React Router Starter' },
+    {
+      name: 'description',
+      content:
+        'React + TypeScript + React Router + React Query + React Hook Form + Material UI Starter',
+    },
   ];
 }
 
 export default function Home() {
-  return <Welcome />;
+  return <Button variant="contained">Hello world</Button>;
 }
