@@ -1,5 +1,5 @@
 import type { Route } from './+types/home';
-import { Button } from '@mui/material';
+import { Box, Button, TextField } from '@mui/material';
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -14,8 +14,23 @@ export function meta({}: Route.MetaArgs) {
 
 export default function Home() {
   return (
-    <Button variant="contained" className="text-3xl">
-      Hello world
-    </Button>
+    <Box
+      component="form"
+      noValidate
+      autoComplete="off"
+      className="p-4 flex flex-col gap-4 max-w-3xl mx-auto"
+    >
+      <TextField id="standard-basic" label="First Name" variant="standard" />
+      <TextField
+        id="standard-basic"
+        label="Last Name"
+        required
+        variant="standard"
+      />
+
+      <TextField id="standard-basic" label="City" variant="standard" />
+      <TextField id="standard-basic" label="State" variant="standard" />
+      <Button variant="contained">Search</Button>
+    </Box>
   );
 }
