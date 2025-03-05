@@ -6,11 +6,13 @@ import {
   Scripts,
   ScrollRestoration,
 } from 'react-router';
-
+import { CacheProvider } from '@emotion/react';
+import createCache from '@emotion/cache';
 import { CssBaseline } from '@mui/material';
-
 import type { Route } from './+types/root';
 import './app.css';
+
+const clientSideEmotionCache = createCache({ key: 'css' });
 
 export const links: Route.LinksFunction = () => [
   { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
@@ -25,7 +27,10 @@ export const links: Route.LinksFunction = () => [
   },
 ];
 
-export function Layout({ children }: { children: React.ReactNode }) {
+export function Layout(
+  { children }: { children: React.ReactNode },
+  emotionCache = clientSideEmotionCache
+) {
   return (
     <html lang="en">
       <head>
@@ -36,7 +41,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </head>
       <CssBaseline />
       <body>
-        {children}
+        <CacheProvider value={emotionCache}>{children}</CacheProvider>
         <ScrollRestoration />
         <Scripts />
       </body>
