@@ -1,12 +1,7 @@
+import React from 'react';
 import type { Route } from './+types/home';
-import {
-  Box,
-  Button,
-  MenuItem,
-  Select,
-  SelectChangeEvent,
-  TextField,
-} from '@mui/material';
+import { Autocomplete, Box, Button, TextField } from '@mui/material';
+import { usStates } from '~/constants';
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -20,6 +15,12 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export default function Home() {
+  const [age, setAge] = React.useState('');
+
+  const handleChange = (event: SelectChangeEvent) => {
+    setAge(event.target.value as string);
+  };
+
   return (
     <Box
       component="form"
@@ -34,26 +35,41 @@ export default function Home() {
           NPPES NPI Registry
         </a>
       </p>
-      <TextField id="standard-basic" label="First Name" variant="standard" />
-      <TextField
-        id="standard-basic"
-        label="Last Name"
-        required
-        variant="standard"
-      />
-      <TextField id="standard-basic" label="City" variant="standard" />
-      <Select
-        labelId="demo-simple-select-label"
-        id="demo-simple-select"
-        value={age}
-        label="Age"
-        onChange={handleChange}
-      >
-        <MenuItem value={al}>Alabama</MenuItem>
-        <MenuItem value={ak}>Alaska</MenuItem>
-        <MenuItem value={ar}>Arizona</MenuItem>
-      </Select>
+
+      <Box className="flex gap-4">
+        <TextField
+          id="standard-basic"
+          label="First Name"
+          variant="standard"
+          className="flex-1"
+        />
+        <TextField
+          id="standard-basic"
+          label="Last Name"
+          required
+          variant="standard"
+          className="flex-1"
+        />
+      </Box>
+      <Box className="flex gap-4 mb-4">
+        <TextField
+          id="standard-basic"
+          label="City"
+          variant="standard"
+          className="flex-1"
+        />
+        <Autocomplete
+          disablePortal
+          options={usStates}
+          className="flex-1"
+          renderInput={(params) => (
+            <TextField {...params} label="State" variant="standard" />
+          )}
+        />
+      </Box>
+
       <Button variant="contained">Search</Button>
+      <Button variant="outlined">Reset</Button>
     </Box>
   );
 }
