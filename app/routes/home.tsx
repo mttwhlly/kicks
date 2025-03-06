@@ -15,12 +15,6 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export default function Home() {
-  const [age, setAge] = React.useState('');
-
-  const handleChange = (event: SelectChangeEvent) => {
-    setAge(event.target.value as string);
-  };
-
   return (
     <Box
       component="form"
