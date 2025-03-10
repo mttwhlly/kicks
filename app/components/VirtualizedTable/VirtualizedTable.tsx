@@ -124,7 +124,7 @@ function rowContent(_index: number, row: Data) {
   );
 }
 
-export default function ReactVirtualizedTable() {
+export default function VirtualizedTable() {
   return (
     <Paper style={{ height: 400, width: '100%' }}>
       <TableVirtuoso
