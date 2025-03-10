@@ -18,7 +18,7 @@ export function meta({}: Route.MetaArgs) {
     {
       name: 'description',
       content:
-        'React + TypeScript + Vite + React Router + React Query + React Hook Form + Material UI Starter + Tailwind CSS',
+        'React + TypeScript + Vite + Tanstack Router/Query/Form + Material UI + Tailwind CSS',
     },
   ];
 }
