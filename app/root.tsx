@@ -6,9 +6,9 @@ import {
   Scripts,
   ScrollRestoration,
 } from 'react-router';
-import { StyledEngineProvider } from '@mui/material/styles';
 import { CacheProvider } from '@emotion/react';
 import createCache from '@emotion/cache';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { CssBaseline } from '@mui/material';
 import type { Route } from './+types/root';
 import './app.css';
@@ -32,6 +32,8 @@ export function Layout(
   { children }: { children: React.ReactNode },
   emotionCache = clientSideEmotionCache
 ) {
+  const queryClient = new QueryClient();
+
   return (
     <html lang="en">
       <head>
@@ -42,7 +44,9 @@ export function Layout(
       </head>
       <CssBaseline />
       <body>
-        <CacheProvider value={emotionCache}>{children}</CacheProvider>
+        <QueryClientProvider client={queryClient}>
+          <CacheProvider value={emotionCache}>{children}</CacheProvider>
+        </QueryClientProvider>
         <ScrollRestoration />
         <Scripts />
       </body>
