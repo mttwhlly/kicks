@@ -1,10 +1,5 @@
 import React, { Suspense } from 'react';
-import {
-  Autocomplete as MuiAutocomplete,
-  Box as MuiBox,
-  Button as MuiButton,
-  TextField as MuiTextField,
-} from '@mui/material';
+import { Autocomplete, Box, Button, TextField } from '@mui/material';
 import { createFormHook, createFormHookContexts } from '@tanstack/react-form';
 import { usStates } from '~/constants/constants';
 import VirtualizedTable from '~/components/VirtualizedTable/VirtualizedTable';
@@ -15,11 +10,11 @@ const { fieldContext, formContext } = createFormHookContexts();
 
 const { useAppForm } = createFormHook({
   fieldComponents: {
-    MuiTextField,
-    MuiAutocomplete,
+    TextField,
+    Autocomplete,
   },
   formComponents: {
-    MuiButton,
+    Button,
   },
   fieldContext,
   formContext,
@@ -54,7 +49,7 @@ export default function Home() {
 
   return (
     <Suspense fallback={<p>Loading...</p>}>
-      <MuiBox className="mt-8 p-4 flex flex-col gap-4 max-w-3xl mx-auto border border-gray-200 rounded-md">
+      <Box className="mt-8 p-4 flex flex-col gap-4 max-w-3xl mx-auto border border-gray-200 rounded-md">
         <h1 className="text-3xl font-bold">Provider Search</h1>
         <p>
           Search for a US healthcare provider on the{' '}
@@ -68,14 +63,14 @@ export default function Home() {
             form.handleSubmit();
           }}
         >
-          <MuiBox className="flex gap-4 mb-4">
-            <MuiBox className="flex flex-col flex-1">
+          <Box className="flex gap-4 mb-4">
+            <Box className="flex flex-col flex-1">
               <form.AppField
                 name="firstName"
                 children={(field) => {
                   return (
                     <>
-                      <MuiTextField
+                      <TextField
                         label="First Name"
                         variant="standard"
                         className="flex-1"
@@ -101,14 +96,14 @@ export default function Home() {
                   );
                 }}
               />
-            </MuiBox>
-            <MuiBox className="flex flex-col flex-1">
+            </Box>
+            <Box className="flex flex-col flex-1">
               <form.AppField
                 name="lastName"
                 children={(field) => {
                   return (
                     <>
-                      <MuiTextField
+                      <TextField
                         label="Last Name"
                         variant="standard"
                         className="flex-1"
@@ -135,15 +130,15 @@ export default function Home() {
                   );
                 }}
               />
-            </MuiBox>
-          </MuiBox>
-          <MuiBox className="flex gap-4 mb-4">
+            </Box>
+          </Box>
+          <Box className="flex gap-4 mb-4">
             <form.AppField
               name="city"
               children={(field) => {
                 return (
-                  <MuiBox className="flex flex-col flex-1">
-                    <MuiTextField
+                  <Box className="flex flex-col flex-1">
+                    <TextField
                       label="City"
                       variant="standard"
                       className="flex-1"
@@ -165,7 +160,7 @@ export default function Home() {
                           : null
                       }
                     />
-                  </MuiBox>
+                  </Box>
                 );
               }}
             />
@@ -173,8 +168,8 @@ export default function Home() {
               name="state"
               children={(field) => {
                 return (
-                  <MuiBox className="flex flex-col flex-1">
-                    <MuiAutocomplete
+                  <Box className="flex flex-col flex-1">
+                    <Autocomplete
                       disablePortal
                       value={stateValue}
                       onChange={(event, newValue) => {
@@ -193,7 +188,7 @@ export default function Home() {
                       getOptionLabel={(option) => option.label}
                       className="flex-1"
                       renderInput={(params) => (
-                        <MuiTextField
+                        <TextField
                           {...params}
                           label="State"
                           variant="standard"
@@ -214,17 +209,17 @@ export default function Home() {
                         />
                       )}
                     />
-                  </MuiBox>
+                  </Box>
                 );
               }}
             />
-          </MuiBox>
-          <MuiBox className="flex gap-4">
+          </Box>
+          <Box className="flex gap-4">
             <form.AppForm>
-              <MuiButton type="submit" variant="contained" className="w-1/2">
+              <Button type="submit" variant="contained" className="w-1/2">
                 Submit
-              </MuiButton>
-              <MuiButton
+              </Button>
+              <Button
                 type="reset"
                 variant="outlined"
                 onClick={() => {
@@ -235,15 +230,15 @@ export default function Home() {
                 className="w-1/2"
               >
                 Reset
-              </MuiButton>
+              </Button>
             </form.AppForm>
-          </MuiBox>
+          </Box>
         </form>
-      </MuiBox>
-      <MuiBox className="mt-8 p-4 flex flex-col gap-4 max-w-3xl mx-auto border border-gray-200 rounded-md">
+      </Box>
+      <Box className="mt-8 p-4 flex flex-col gap-4 max-w-3xl mx-auto border border-gray-200 rounded-md">
         <h2 className="text-2xl font-bold">Search Results</h2>
         <VirtualizedTable />
-      </MuiBox>
+      </Box>
     </Suspense>
   );
 }
