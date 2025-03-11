@@ -1,26 +1,18 @@
 import React, { Suspense } from 'react';
 import { Autocomplete, Box, Button, TextField } from '@mui/material';
-import { createFormHook, createFormHookContexts } from '@tanstack/react-form';
 import { usStates } from '~/constants/constants';
 import VirtualizedTable from '~/components/VirtualizedTable/VirtualizedTable';
 import { z } from 'zod';
 import type { USStateType } from '~/types/usStates';
+import { useAppForm } from '~/hooks/use-form';
+import type { Route } from './+types/home';
 
-const { fieldContext, formContext } = createFormHookContexts();
-
-const { useAppForm } = createFormHook({
-  fieldComponents: {
-    TextField,
-    Autocomplete,
-  },
-  formComponents: {
-    Button,
-  },
-  fieldContext,
-  formContext,
-});
-
-export default function Home() {
+export default function Home({
+  loaderData,
+  actionData,
+  params,
+  matches,
+}: Route.ComponentProps) {
   const form = useAppForm({
     defaultValues: {
       firstName: '',
@@ -43,7 +35,9 @@ export default function Home() {
     },
   });
 
-  // Fix the state types to match the Autocomplete options
+  console.log(loaderData, actionData, params, matches);
+
+  // US State types to match the Autocomplete options
   const [stateValue, setStateValue] = React.useState<USStateType | null>(null);
   const [inputValue, setInputValue] = React.useState('');
 

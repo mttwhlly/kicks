@@ -1,16 +1,17 @@
-import { lazy } from 'react';
 import { createFormHook } from '@tanstack/react-form';
 import { fieldContext, formContext } from '~/hooks/use-form-context';
-
-const TextField = lazy(() => import('../components/TextField/TextField'));
+import { Autocomplete, Button, TextField } from '@mui/material';
 
 const { useAppForm, withForm } = createFormHook({
-  fieldContext,
-  formContext,
   fieldComponents: {
     TextField,
+    Autocomplete,
   },
-  formComponents: {},
+  formComponents: {
+    Button,
+  },
+  fieldContext,
+  formContext,
 });
 
 export { useAppForm, withForm };
