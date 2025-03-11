@@ -13,6 +13,17 @@ import { CssBaseline } from '@mui/material';
 import type { Route } from './+types/root';
 import './app.css';
 
+export function meta({}: Route.MetaArgs) {
+  return [
+    { title: 'React Router Starter' },
+    {
+      name: 'description',
+      content:
+        'React + TypeScript + Vite + Tanstack Router/Query/Form + Material UI + Tailwind CSS',
+    },
+  ];
+}
+
 const clientSideEmotionCache = createCache({ key: 'css' });
 
 export const links: Route.LinksFunction = () => [
