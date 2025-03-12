@@ -6,6 +6,7 @@ import { z } from 'zod';
 import type { USStateType } from '~/types/usStates';
 import { useAppForm } from '~/hooks/use-form';
 import type { Route } from './+types/home';
+import { useMutation } from '@tanstack/react-query';
 
 export default function Home({
   loaderData,
@@ -22,22 +23,61 @@ export default function Home({
     },
     validators: {
       onChange: z.object({
-        firstName: z
-          .string()
-          .min(3, 'First name must be at least 3 characters'),
-        lastName: z.string().min(3),
-        city: z.string().min(3),
+        firstName: z.string(),
+        lastName: z.string(),
+        city: z.string(),
         state: z.string(),
       }),
     },
     onSubmit: ({ value }) => {
-      alert(JSON.stringify(value, null, 2));
+      mutation.mutate(value);
     },
   });
 
-  console.log(loaderData, actionData, params, matches);
+  const mutation = useMutation({
+    mutationFn: async (value: {
+      firstName: String;
+      lastName: String;
+      city: String;
+      state: String;
+    }) => {
+      const response = await fetch(
+        `https://npiregistry.cms.hhs.gov/api/?number=&enumeration_type=&taxonomy_description=&name_purpose=&first_name=${value.firstName}&use_first_name_alias=&last_name=${value.lastName}&organization_name=&address_purpose=&city=${value.city}&state=${value.state}&postal_code=&country_code=&limit=&skip=&pretty=&version=2.1`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
 
-  // US State types to match the Autocomplete options
+      if (!response.ok) {
+        throw new Error('Failed to submit form');
+      }
+
+      return response.json();
+    },
+    onSuccess: (data) => {
+      // Handle successful submission
+      console.log('Submission successful:', data);
+      setSubmissionResult(data); // Store the result in state instead of navigating
+
+      // Optionally reset the form
+      form.reset();
+    },
+    onError: (error) => {
+      // Handle submission error
+      console.error('Submission error:', error);
+    },
+  });
+
+  const [submissionResult, setSubmissionResult] = React.useState({
+    firstName: '',
+    lastName: '',
+    city: '',
+    state: '',
+  });
+
   const [stateValue, setStateValue] = React.useState<USStateType | null>(null);
   const [inputValue, setInputValue] = React.useState('');
 
@@ -54,6 +94,7 @@ export default function Home({
         <form
           onSubmit={(e) => {
             e.preventDefault();
+            e.stopPropagation();
             form.handleSubmit();
           }}
         >
@@ -211,7 +252,7 @@ export default function Home({
           <Box className="flex gap-4">
             <form.AppForm>
               <Button type="submit" variant="contained" className="w-1/2">
-                Submit
+                {mutation.isPending ? 'Submitting...' : 'Submit'}
               </Button>
               <Button
                 type="reset"
@@ -231,7 +272,29 @@ export default function Home({
       </Box>
       <Box className="mt-8 p-4 flex flex-col gap-4 max-w-3xl mx-auto border border-gray-200 rounded-md">
         <h2 className="text-2xl font-bold">Search Results</h2>
-        <VirtualizedTable />
+        <table className="w-full border-collapse border border-gray-300">
+          <thead>
+            <tr className="bg-gray-100">
+              <th className="border border-gray-300 p-2 text-left">Field</th>
+              <th className="border border-gray-300 p-2 text-left">Value</th>
+            </tr>
+          </thead>
+          <tbody>
+            {Object.entries(submissionResult).map(([key, value]) => (
+              <tr key={key}>
+                <td className="border border-gray-300 p-2 font-medium">
+                  {key}
+                </td>
+                <td className="border border-gray-300 p-2">
+                  {typeof value === 'object'
+                    ? JSON.stringify(value)
+                    : String(value)}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {/* <VirtualizedTable /> */}
       </Box>
     </Suspense>
   );
