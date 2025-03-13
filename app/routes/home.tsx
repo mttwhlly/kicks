@@ -42,9 +42,11 @@ export default function Home({
       state: String;
     }) => {
       const response = await fetch(
-        `https://npiregistry.cms.hhs.gov/api/?number=&enumeration_type=&taxonomy_description=&name_purpose=&first_name=${value.firstName}&use_first_name_alias=&last_name=${value.lastName}&organization_name=&address_purpose=&city=${value.city}&state=${value.state}&postal_code=&country_code=&limit=&skip=&pretty=&version=2.1`,
+        `https://occ8ko8kw44kckgk8sw8wk84.mttwhlly.cc/providers?firstName=${value.firstName}&lastName=${value.lastName}&city=${value.city}&state=${value.state}`,
+        // `https://npiregistry.cms.hhs.gov/api/?number=&enumeration_type=&taxonomy_description=&name_purpose=&first_name=${value.firstName}&use_first_name_alias=&last_name=${value.lastName}&organization_name=&address_purpose=&city=${value.city}&state=${value.state}&postal_code=&country_code=&limit=&skip=&pretty=&version=2.1`,
         {
           method: 'GET',
+          mode: 'no-cors', // no-cors added to avoid CORS error
           headers: {
             'Content-Type': 'application/json',
           },
@@ -108,7 +110,7 @@ export default function Home({
                       <TextField
                         label="First Name"
                         variant="standard"
-                        className="flex-1"
+                        className="flex-1 capitalize"
                         id={field.name}
                         name={field.name}
                         value={field.state.value}
@@ -141,7 +143,7 @@ export default function Home({
                       <TextField
                         label="Last Name"
                         variant="standard"
-                        className="flex-1"
+                        className="flex-1 capitalize"
                         id={field.name}
                         name={field.name}
                         value={field.state.value}
@@ -176,7 +178,7 @@ export default function Home({
                     <TextField
                       label="City"
                       variant="standard"
-                      className="flex-1"
+                      className="flex-1 capitalize"
                       id={field.name}
                       name={field.name}
                       value={field.state.value}
