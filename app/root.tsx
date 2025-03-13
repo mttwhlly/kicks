@@ -9,6 +9,7 @@ import {
 import { CacheProvider } from '@emotion/react';
 import createCache from '@emotion/cache';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { CssBaseline } from '@mui/material';
 import type { Route } from './+types/root';
 import './app.css';
@@ -57,6 +58,7 @@ export function Layout(
       <body>
         <QueryClientProvider client={queryClient}>
           <CacheProvider value={emotionCache}>{children}</CacheProvider>
+          <ReactQueryDevtools initialIsOpen={false} />
         </QueryClientProvider>
         <ScrollRestoration />
         <Scripts />

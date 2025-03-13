@@ -20,6 +20,7 @@
     "@react-router/serve": "^7.2.0",
     "@tanstack/react-form": "^1.0.0",
     "@tanstack/react-query": "^5.67.1",
+    "@tanstack/react-query-devtools": "^5.67.3",
     "@types/chance": "^1.1.6",
     "chance": "^1.1.12",
     "isbot": "^5.1.17",

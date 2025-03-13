@@ -8,12 +8,7 @@ import { useAppForm } from '~/hooks/use-form';
 import type { Route } from './+types/home';
 import { useMutation } from '@tanstack/react-query';
 
-export default function Home({
-  loaderData,
-  actionData,
-  params,
-  matches,
-}: Route.ComponentProps) {
+export default function Home() {
   const form = useAppForm({
     defaultValues: {
       firstName: '',
@@ -30,58 +25,153 @@ export default function Home({
       }),
     },
     onSubmit: ({ value }) => {
-      mutation.mutate(value);
+      mutation.mutateAsync(value);
     },
   });
 
+  const [responseData, setResponseData] = React.useState([{}]);
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+
+  const [stateValue, setStateValue] = React.useState<USStateType | null>(null);
+  const [inputValue, setInputValue] = React.useState('');
+
   const mutation = useMutation({
     mutationFn: async (value: {
-      firstName: String;
-      lastName: String;
-      city: String;
-      state: String;
+      firstName: string;
+      lastName: string;
+      city: string;
+      state: string;
     }) => {
-      const response = await fetch(
-        `https://occ8ko8kw44kckgk8sw8wk84.mttwhlly.cc/providers?firstName=${value.firstName}&lastName=${value.lastName}&city=${value.city}&state=${value.state}`,
-        // `https://npiregistry.cms.hhs.gov/api/?number=&enumeration_type=&taxonomy_description=&name_purpose=&first_name=${value.firstName}&use_first_name_alias=&last_name=${value.lastName}&organization_name=&address_purpose=&city=${value.city}&state=${value.state}&postal_code=&country_code=&limit=&skip=&pretty=&version=2.1`,
-        {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        // Build the query parameters
+        const params = new URLSearchParams();
+        if (value.firstName) params.append('firstName', value.firstName);
+        if (value.lastName) params.append('lastName', value.lastName);
+        if (value.city) params.append('city', value.city);
+        if (value.state) params.append('state', value.state);
+
+        // Construct the URL with query parameters
+        const url = `https://occ8ko8kw44kckgk8sw8wk84.mttwhlly.cc/providers?${params.toString()}`;
+
+        // Make the request
+        const response = await fetch(url, {
           method: 'GET',
-          mode: 'no-cors', // no-cors added to avoid CORS error
           headers: {
             'Content-Type': 'application/json',
           },
+        });
+
+        if (!response.ok) {
+          // Extract more detailed error information if available
+          const errorText = await response.text();
+          throw new Error(
+            errorText || `Request failed with status ${response.status}`
+          );
         }
-      );
 
-      if (!response.ok) {
-        throw new Error('Failed to submit form');
+        // Parse the JSON response
+        const data = await response.json();
+
+        setResponseData(data);
+        return data;
+      } catch (err) {
+        // Handle different types of errors
+        if (err instanceof TypeError && err.message.includes('NetworkError')) {
+          // Network error (possibly CORS-related)
+          setError(
+            'Network error: This might be due to CORS restrictions. Please check the console for more details.'
+          );
+        } else {
+          // Other errors
+          setError(
+            `Error: ${
+              err instanceof Error ? err.message : 'Unknown error occurred'
+            }`
+          );
+        }
+        console.error('API request failed:', err);
+        throw err;
+      } finally {
+        setIsLoading(false);
       }
-
-      return response.json();
     },
     onSuccess: (data) => {
-      // Handle successful submission
       console.log('Submission successful:', data);
-      setSubmissionResult(data); // Store the result in state instead of navigating
-
-      // Optionally reset the form
-      form.reset();
     },
     onError: (error) => {
-      // Handle submission error
       console.error('Submission error:', error);
     },
   });
 
-  const [submissionResult, setSubmissionResult] = React.useState({
-    firstName: '',
-    lastName: '',
-    city: '',
-    state: '',
-  });
+  const renderResults = () => {
+    if (isLoading) {
+      return <div className="text-center py-4">Loading results...</div>;
+    }
 
-  const [stateValue, setStateValue] = React.useState<USStateType | null>(null);
-  const [inputValue, setInputValue] = React.useState('');
+    if (error) {
+      return (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+          <p className="font-medium">Request failed</p>
+          <p>{error}</p>
+          <p className="text-sm mt-2">
+            If this is a CORS issue, you may need to:
+            <ul className="list-disc pl-5 mt-1">
+              <li>Ensure the API allows requests from your domain</li>
+              <li>Use a proxy server to make the request</li>
+              <li>Contact the API administrator to enable CORS</li>
+            </ul>
+          </p>
+        </div>
+      );
+    }
+
+    if (responseData) {
+      // Check if the response contains any results
+      const hasResults = Array.isArray(responseData) && responseData.length > 0;
+
+      if (!hasResults) {
+        return (
+          <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded">
+            <p>
+              No results found for your search criteria. Please try different
+              search terms.
+            </p>
+          </div>
+        );
+      }
+
+      // Render the results table
+      return (
+        <div>
+          <div className="mb-4">
+            <p className="text-gray-700">Found {responseData.length} results</p>
+          </div>
+
+          {/* <VirtualizedTable data={responseData.results} /> */}
+
+          {/* Debug section for development */}
+          <details className="mt-6 border-t pt-4">
+            <summary className="cursor-pointer text-gray-500">
+              Debug: Raw Response Data
+            </summary>
+            <pre className="mt-2 p-3 bg-gray-100 rounded text-xs overflow-auto max-h-96">
+              {JSON.stringify(responseData, null, 2)}
+            </pre>
+          </details>
+        </div>
+      );
+    }
+
+    return (
+      <div className="text-gray-500 text-center py-8">
+        Enter search criteria and submit to see results
+      </div>
+    );
+  };
 
   return (
     <Suspense fallback={<p>Loading...</p>}>
@@ -89,7 +179,12 @@ export default function Home({
         <h1 className="text-3xl font-bold">Provider Search</h1>
         <p>
           Search for a US healthcare provider on the{' '}
-          <a className="underline" href="https://npiregistry.cms.hhs.gov/">
+          <a
+            className="underline"
+            href="https://npiregistry.cms.hhs.gov/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
             NPPES NPI Registry
           </a>
         </p>
@@ -252,51 +347,35 @@ export default function Home({
             />
           </Box>
           <Box className="flex gap-4">
-            <form.AppForm>
-              <Button type="submit" variant="contained" className="w-1/2">
-                {mutation.isPending ? 'Submitting...' : 'Submit'}
-              </Button>
-              <Button
-                type="reset"
-                variant="outlined"
-                onClick={() => {
-                  form.reset();
-                  setStateValue(null);
-                  setInputValue('');
-                }}
-                className="w-1/2"
-              >
-                Reset
-              </Button>
-            </form.AppForm>
+            <Button
+              type="submit"
+              variant="contained"
+              className="w-1/2"
+              disabled={isLoading}
+            >
+              {isLoading ? 'Searching...' : 'Search'}
+            </Button>
+            <Button
+              type="reset"
+              variant="outlined"
+              onClick={() => {
+                form.reset();
+                setStateValue(null);
+                setInputValue('');
+                setResponseData(null);
+                setError(null);
+              }}
+              className="w-1/2"
+              disabled={isLoading}
+            >
+              Reset
+            </Button>
           </Box>
         </form>
       </Box>
       <Box className="mt-8 p-4 flex flex-col gap-4 max-w-3xl mx-auto border border-gray-200 rounded-md">
         <h2 className="text-2xl font-bold">Search Results</h2>
-        <table className="w-full border-collapse border border-gray-300">
-          <thead>
-            <tr className="bg-gray-100">
-              <th className="border border-gray-300 p-2 text-left">Field</th>
-              <th className="border border-gray-300 p-2 text-left">Value</th>
-            </tr>
-          </thead>
-          <tbody>
-            {Object.entries(submissionResult).map(([key, value]) => (
-              <tr key={key}>
-                <td className="border border-gray-300 p-2 font-medium">
-                  {key}
-                </td>
-                <td className="border border-gray-300 p-2">
-                  {typeof value === 'object'
-                    ? JSON.stringify(value)
-                    : String(value)}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {/* <VirtualizedTable /> */}
+        {renderResults()}
       </Box>
     </Suspense>
   );
