@@ -102,6 +102,7 @@ function DynamicVirtualizedTable<T extends object>({
             align={column.numeric || false ? 'right' : 'left'}
             style={{ width: column.width }}
             sx={{ backgroundColor: 'background.paper' }}
+            className="font-bold uppercase"
           >
             {column.label}
           </TableCell>
