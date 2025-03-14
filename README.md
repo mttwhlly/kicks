@@ -1,4 +1,4 @@
-# NVA
+# Tiny Moves
 
 A minimal template for building a React application using Vite, React Router 7, and TypeScript.
 
@@ -51,16 +51,14 @@ npm run build
 
 ### Docker Deployment
 
-This template includes a Dockerfile:
-
-- `Dockerfile`
+This template includes a `Dockerfile` for containerization.
 
 To build and run using Docker:
 
 ```bash
 # For npm
-docker build -t nva .
+docker build -t tiny-moves-app .
 
 # Run the container
-docker run -p 3000:3000 nva
+docker run -p 3000:3000 tiny-moves-app
 ```
