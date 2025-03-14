@@ -6,11 +6,4 @@ import fs from 'fs';
 
 export default defineConfig({
   plugins: [reactRouter(), tailwindcss(), tsconfigPaths()],
-  server: {
-    https: {
-      key: fs.readFileSync('./localhost-key.pem'),
-      cert: fs.readFileSync('./localhost.pem'),
-    },
-    proxy: {},
-  },
 });
