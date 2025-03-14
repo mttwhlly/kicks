@@ -42,8 +42,11 @@ export const links: Route.LinksFunction = () => [
 
 export function Layout(
   { children }: { children: React.ReactNode },
-  emotionCache = clientSideEmotionCache
+  emotionCache = clientSideEmotionCache,
+  { loaderData }: Route.ComponentProps
 ) {
+  // const { data } = loaderData;
+
   const queryClient = new QueryClient();
 
   return (
