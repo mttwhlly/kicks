@@ -1,6 +1,6 @@
-# Tiny Moves 🛼
+# Kicks 👟
 
-A minimal template for building a scalable React application.
+A minimal template for building a scalable React application with RR7 and a bunch of other goodies.
 
 [![Open in CodeSandbox](https://codesandbox.io/static/img/play-codesandbox.svg)](https://codesandbox.io/s/github/mttwhlly/tiny-moves)
 
@@ -57,8 +57,8 @@ To build and run using Docker:
 
 ```bash
 # For npm
-docker build -t tiny-moves-app .
+docker build -t kicks-app .
 
 # Run the container
-docker run -p 3000:3000 tiny-moves-app
+docker run -p 3000:3000 kicks-app
 ```
