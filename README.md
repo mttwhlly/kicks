@@ -1,6 +1,6 @@
-# Tiny Moves
+# Tiny Moves 🛼
 
-A minimal template for building a React application using Vite, React Router 7, and TypeScript.
+A minimal template for building a scalable React application.
 
 [![Open in CodeSandbox](https://codesandbox.io/static/img/play-codesandbox.svg)](https://codesandbox.io/s/github/mttwhlly/tiny-moves)
 
