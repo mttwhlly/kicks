@@ -5,4 +5,10 @@ import tsconfigPaths from 'vite-tsconfig-paths';
 
 export default defineConfig({
   plugins: [reactRouter(), tailwindcss(), tsconfigPaths()],
+  ssr: {
+    noExternal: ['@mui/icons-material'],
+  },
+  optimizeDeps: {
+    include: ['@mui/icons-material'],
+  },
 });

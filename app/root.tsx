@@ -13,6 +13,9 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { CssBaseline } from '@mui/material';
 import type { Route } from './+types/root';
 import './app.css';
+import Header from './components/Header/Header';
+import Footer from './components/Footer/Footer';
+import { useLocation } from 'react-router';
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -42,11 +45,8 @@ export const links: Route.LinksFunction = () => [
 
 export function Layout(
   { children }: { children: React.ReactNode },
-  emotionCache = clientSideEmotionCache,
-  { loaderData }: Route.ComponentProps
+  emotionCache = clientSideEmotionCache
 ) {
-  // const { data } = loaderData;
-
   const queryClient = new QueryClient();
 
   return (
@@ -58,9 +58,13 @@ export function Layout(
         <Links />
       </head>
       <CssBaseline />
-      <body>
+      <body className="flex flex-col h-screen justify-between antialiased">
         <QueryClientProvider client={queryClient}>
-          <CacheProvider value={emotionCache}>{children}</CacheProvider>
+          <CacheProvider value={emotionCache}>
+            <Header />
+            <main className="mb-auto">{children}</main>
+            <Footer />
+          </CacheProvider>
           <ReactQueryDevtools initialIsOpen={false} />
         </QueryClientProvider>
         <ScrollRestoration />
