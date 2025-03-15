@@ -1,15 +1,17 @@
 import React, { Suspense } from 'react';
 import { Box, ToggleButton, ToggleButtonGroup } from '@mui/material';
 import Search from '~/components/Search/Search';
+import { Outlet } from 'react-router';
 
 export default function Index() {
-  const [alignment, setAlignment] = React.useState('practitioner');
+  const [type, setType] = React.useState('practitioner');
+  const [view, setView] = React.useState('list');
 
   const handleChange = (
     event: React.MouseEvent<HTMLElement>,
     newAlignment: string
   ) => {
-    setAlignment(newAlignment);
+    setType(newAlignment);
   };
   return (
     <Suspense fallback={<p>Loading...</p>}>
@@ -20,7 +22,7 @@ export default function Index() {
         </Box>
         <ToggleButtonGroup
           color="primary"
-          value={alignment}
+          value={type}
           exclusive
           onChange={handleChange}
           aria-label="Type"
@@ -30,6 +32,19 @@ export default function Index() {
         </ToggleButtonGroup>
       </Box>
       <Search />
+      <Box className="flex justify-end mt-4">
+        <ToggleButtonGroup
+          color="primary"
+          value={view}
+          exclusive
+          onChange={handleChange}
+          aria-label="View"
+        >
+          <ToggleButton value="list">List</ToggleButton>
+          <ToggleButton value="map">Map</ToggleButton>
+        </ToggleButtonGroup>
+        <Outlet />
+      </Box>
     </Suspense>
   );
 }
