@@ -2,6 +2,7 @@ import React, { Suspense } from 'react';
 import { Box, ToggleButton, ToggleButtonGroup } from '@mui/material';
 import Search from '~/components/Search/Search';
 import { Outlet } from 'react-router';
+import InteractiveMapWithCards from '~/components/InteractiveMapWithCards/InteractiveMapWithCards';
 
 export default function Index() {
   const [type, setType] = React.useState('practitioner');
@@ -32,18 +33,21 @@ export default function Index() {
         </ToggleButtonGroup>
       </Box>
       <Search />
-      <Box className="flex justify-end mt-4">
-        <ToggleButtonGroup
-          color="primary"
-          value={view}
-          exclusive
-          onChange={handleChange}
-          aria-label="View"
-        >
-          <ToggleButton value="list">List</ToggleButton>
-          <ToggleButton value="map">Map</ToggleButton>
-        </ToggleButtonGroup>
-        <Outlet />
+      <Box>
+        <Box className="flex justify-end mt-4">
+          <ToggleButtonGroup
+            color="primary"
+            value={view}
+            exclusive
+            onChange={handleChange}
+            aria-label="View"
+          >
+            <ToggleButton value="list">List</ToggleButton>
+            <ToggleButton value="map">Map</ToggleButton>
+          </ToggleButtonGroup>
+          <Outlet />
+        </Box>
+        <InteractiveMapWithCards />
       </Box>
     </Suspense>
   );
