@@ -14,7 +14,7 @@ export default function Header() {
           className="text-black no-underline flex flex-row items-center leading-0"
         >
           <Logo className="h-[1rem] w-[78px]" />
-          <span className="text-[1.25rem] font-medium ml-2">NOVA</span>
+          <span className="text-[1rem] ml-2 pt-0.5">NOVA</span>
         </Link>
       </Toolbar>
     </AppBar>
