@@ -19,11 +19,11 @@ import { useLocation } from 'react-router';
 
 export function meta({}: Route.MetaArgs) {
   return [
-    { title: 'React Router Starter' },
+    { title: 'CAQH NOVA' },
     {
       name: 'description',
       content:
-        'React + TypeScript + Vite + Tanstack Router/Query/Form + Material UI + Tailwind CSS',
+        'Find providers in your network. Verified Provider & Facility Data.',
     },
   ];
 }

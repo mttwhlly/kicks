@@ -1,5 +1,5 @@
-// InteractiveMapWithCards.jsx
-import React, { useState, useEffect, Suspense, lazy } from 'react';
+import { useState, useEffect, Suspense, lazy } from 'react';
+import { Chip } from '@mui/material';
 
 // Sample location data
 const locationData = [
@@ -79,7 +79,7 @@ const locationData = [
 const MapComponent = lazy(() => import('./MapComponent'));
 
 const InteractiveMapWithCards = () => {
-  const [selectedLocation, setSelectedLocation] = useState(null);
+  const [selectedLocation, setSelectedLocation] = useState(0);
   const [isBrowser, setIsBrowser] = useState(false);
 
   // Check if we're in the browser environment
@@ -88,12 +88,12 @@ const InteractiveMapWithCards = () => {
   }, []);
 
   // Function to handle card click
-  const handleCardClick = (locationId) => {
+  const handleCardClick = (locationId: number) => {
     setSelectedLocation(locationId);
   };
 
   return (
-    <div className="flex flex-col md:flex-row max-w-6xl mx-auto max-h-1/2 h-screen bg-gray-100">
+    <div className="flex flex-col md:flex-row max-w-6xl mx-auto max-h-svh h-[40rem] bg-gray-100">
       {/* Card Stack Section */}
       <div className="w-full md:w-1/3 h-1/2 md:h-full overflow-y-auto p-4 bg-white">
         <div className="space-y-4">
@@ -110,7 +110,20 @@ const InteractiveMapWithCards = () => {
             >
               <div className="flex justify-between mb-2">
                 <h3 className="text-lg font-semibold">{location.name}</h3>
-                <p className="text-sm text-gray-500 mt-2">{location.status}</p>
+                <Chip
+                  label={location.status}
+                  variant={
+                    location.status.toLowerCase() === 'inactive'
+                      ? 'outlined'
+                      : 'filled'
+                  }
+                  color={
+                    location.status.toLowerCase() === 'inactive'
+                      ? 'default'
+                      : 'primary'
+                  }
+                  size="small"
+                />
               </div>
               <p className="text-gray-600 text-sm">{location.address}</p>
               <p className="mt-2">{location.description}</p>

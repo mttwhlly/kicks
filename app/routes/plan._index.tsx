@@ -28,8 +28,8 @@ export default function Index() {
           onChange={handleChange}
           aria-label="Type"
         >
-          <ToggleButton value="practitioner">Practitioner</ToggleButton>
-          <ToggleButton value="location">Location</ToggleButton>
+          <ToggleButton value="practitioner">Practitioners</ToggleButton>
+          <ToggleButton value="location">Locations</ToggleButton>
         </ToggleButtonGroup>
       </Box>
       <Search />
@@ -42,8 +42,8 @@ export default function Index() {
             onChange={handleChange}
             aria-label="View"
           >
-            <ToggleButton value="list">List</ToggleButton>
-            <ToggleButton value="map">Map</ToggleButton>
+            <ToggleButton value="list">List View</ToggleButton>
+            <ToggleButton value="map">Map View</ToggleButton>
           </ToggleButtonGroup>
           <Outlet />
         </Box>
