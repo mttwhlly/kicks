@@ -1,6 +1,15 @@
 import React, { Suspense, useState, useEffect } from 'react';
-import { Autocomplete, Box, IconButton, TextField } from '@mui/material';
+import {
+  Autocomplete,
+  Box,
+  IconButton,
+  InputAdornment,
+  TextField,
+} from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
+import RoomOutlinedIcon from '@mui/icons-material/RoomOutlined';
+import LocalAtmOutlinedIcon from '@mui/icons-material/LocalAtmOutlined';
+import AccountCircleOutlinedIcon from '@mui/icons-material/AccountCircleOutlined';
 import { usStates } from '~/constants/constants';
 import { z } from 'zod';
 import type { USStateType } from '~/types/usStates';
@@ -37,27 +46,27 @@ const fetchProviders = async (searchParams: Record<string, string>) => {
 
 export default function Search() {
   // Form state for each field
-  const [nameOrSpecialty, setNameOrSpecialty] = useState('');
+  const [firstName, setFirstName] = useState('');
   const [stateValue, setStateValue] = useState<USStateType | null>(null);
   const [stateInputValue, setStateInputValue] = useState('');
   const [organization, setOrganization] = useState('');
   const [orgInputValue, setOrgInputValue] = useState('');
 
   // Debounce the search inputs to prevent excessive API calls
-  const debouncedName = useDebounce(nameOrSpecialty, 500);
+  const debouncedName = useDebounce(firstName, 500);
   const debouncedState = useDebounce(stateValue?.id, 500);
   const debouncedOrg = useDebounce(organization, 500);
 
   // Initialize form
   const form = useAppForm({
     defaultValues: {
-      nameOrSpecialty: '',
+      firstName: '',
       state: '',
       participatingorganization: '',
     },
     validators: {
       onChange: z.object({
-        nameOrSpecialty: z.string(),
+        firstName: z.string(),
         state: z.string(),
         participatingorganization: z.string(),
       }),
@@ -65,7 +74,7 @@ export default function Search() {
     onSubmit: ({ value }) => {
       // This is still useful for the manual search button
       mutation.mutateAsync({
-        nameOrSpecialty: value.nameOrSpecialty,
+        firstName: value.firstName,
         state: value.state,
         participatingorganization: value.participatingorganization,
       });
@@ -74,7 +83,7 @@ export default function Search() {
 
   // Create a search params object for React Query
   const searchParams = {
-    nameOrSpecialty: debouncedName,
+    firstName: debouncedName,
     state: debouncedState || '',
     participatingorganization: debouncedOrg,
   };
@@ -121,20 +130,21 @@ export default function Search() {
             <Box className="flex">
               {/* Name or Specialty Field */}
               <form.AppField
-                name="nameOrSpecialty"
+                name="firstName"
                 children={(field) => {
                   return (
                     <Box className="flex flex-1">
                       <TextField
                         label="Name or Specialty"
+                        placeholder='e.g. "John Doe" or "Cardiology"'
                         variant="outlined"
                         fullWidth
                         id={field.name}
                         name={field.name}
-                        value={nameOrSpecialty}
+                        value={firstName}
                         onChange={(e) => {
                           const value = e.target.value;
-                          setNameOrSpecialty(value);
+                          setFirstName(value);
                           field.handleChange(value);
                         }}
                         error={
@@ -182,6 +192,7 @@ export default function Search() {
                           <TextField
                             {...params}
                             label="State"
+                            placeholder='e.g. "New York"'
                             variant="outlined"
                             id={field.name}
                             name={field.name}
@@ -213,6 +224,7 @@ export default function Search() {
                     <Box className="flex flex-1">
                       <TextField
                         label="Participating Organization"
+                        placeholder='e.g. "Kaiser Permanente"'
                         variant="outlined"
                         fullWidth
                         id={field.name}
@@ -244,7 +256,7 @@ export default function Search() {
               <IconButton
                 type="submit"
                 disabled={isLoading || mutation.isPending}
-                className="rounded-none p-4 bg-neutral-400 text-white text-xl"
+                className="rounded-l-none rounded-r-md p-4 bg-neutral-400 text-white text-xl"
               >
                 <SearchIcon />
               </IconButton>
