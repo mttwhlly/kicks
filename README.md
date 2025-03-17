@@ -2,9 +2,9 @@
 
 A minimal template for building a scalable React application with RR7 and a bunch of other goodies.
 
-[![Open in CodeSandbox](https://codesandbox.io/static/img/play-codesandbox.svg)](https://codesandbox.io/s/github/mttwhlly/kicks)
+<!-- [![Open in CodeSandbox](https://codesandbox.io/static/img/play-codesandbox.svg)](https://codesandbox.io/s/github/mttwhlly/kicks)
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/mttwhlly/kicks)
+[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/mttwhlly/kicks) -->
 
 ## Features
 
