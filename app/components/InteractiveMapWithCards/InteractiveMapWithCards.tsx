@@ -95,7 +95,7 @@ const InteractiveMapWithCards = () => {
   return (
     <div className="flex flex-col md:flex-row max-w-6xl mx-auto max-h-svh h-[40rem] bg-gray-100">
       {/* Card Stack Section */}
-      <div className="w-full md:w-1/3 h-1/2 md:h-full overflow-y-auto p-4 bg-white">
+      <div className="w-full md:w-1/3 h-1/2 md:h-full overflow-y-auto p-4 bg-white border border-neutral-200">
         <div className="space-y-4">
           {locationData.map((location) => (
             <div

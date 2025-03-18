@@ -147,16 +147,18 @@ export default function Index() {
           <p>2,432,218 Providers</p>
           <p>1,004,352 Locations</p>
         </Box>
-        <ToggleButtonGroup
-          color="primary"
-          value={type}
-          exclusive
-          onChange={handleChange}
-          aria-label="Type"
-        >
-          <ToggleButton value="practitioner">Practitioners</ToggleButton>
-          <ToggleButton value="location">Locations</ToggleButton>
-        </ToggleButtonGroup>
+        <Box className="h-6">
+          <ToggleButtonGroup
+            color="primary"
+            value={type}
+            exclusive
+            onChange={handleChange}
+            aria-label="Type"
+          >
+            <ToggleButton value="practitioner">Practitioners</ToggleButton>
+            <ToggleButton value="location">Locations</ToggleButton>
+          </ToggleButtonGroup>
+        </Box>
       </Box>
 
       <Box className="max-w-6xl mx-auto p-5">
