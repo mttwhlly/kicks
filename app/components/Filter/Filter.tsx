@@ -2,14 +2,19 @@ import React, { Suspense, useState, useEffect } from 'react';
 import {
   Autocomplete,
   Box,
+  FormGroup,
+  FormControlLabel,
+  Checkbox,
   IconButton,
   InputAdornment,
+  Paper,
   TextField,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import RoomOutlinedIcon from '@mui/icons-material/RoomOutlined';
 import LocalAtmOutlinedIcon from '@mui/icons-material/LocalAtmOutlined';
 import AccountCircleOutlinedIcon from '@mui/icons-material/AccountCircleOutlined';
+import TuneIcon from '@mui/icons-material/Tune';
 import { usStates } from '~/constants/constants';
 import { z } from 'zod';
 import type { USStateType } from '~/types/usStates';
@@ -44,7 +49,7 @@ const fetchProviders = async (searchParams: Record<string, string>) => {
   return response.json();
 };
 
-export default function Search() {
+export default function ProviderSearch() {
   // Form state for each field
   const [firstName, setFirstName] = useState('');
   const [stateValue, setStateValue] = useState<USStateType | null>(null);
@@ -61,14 +66,18 @@ export default function Search() {
   const form = useAppForm({
     defaultValues: {
       firstName: '',
+      city: '',
       state: '',
-      participatingorganization: '',
+      specialty: '',
+      providerType: '',
     },
     validators: {
       onChange: z.object({
         firstName: z.string(),
+        city: z.string(),
         state: z.string(),
-        participatingorganization: z.string(),
+        specialty: z.string(),
+        providerType: z.string(),
       }),
     },
     onSubmit: ({ value }) => {
@@ -76,7 +85,6 @@ export default function Search() {
       mutation.mutateAsync({
         firstName: value.firstName,
         state: value.state,
-        participatingorganization: value.participatingorganization,
       });
     },
   });
@@ -119,7 +127,7 @@ export default function Search() {
   return (
     <>
       <Suspense fallback={<p>Loading...</p>}>
-        <Box className="my-8 py-8 max-w-6xl mx-auto p-8 bg-neutral-100">
+        <Paper className="max-w-7xl mx-auto p-4 mb-4 sticky top-0 z-[1001] bg-white">
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -127,7 +135,28 @@ export default function Search() {
               form.handleSubmit();
             }}
           >
-            <Box className="flex">
+            <Box className="flex justify-between items-center mb-2">
+              <h3 className="text-lg font-bold flex items-center gap-2">
+                <TuneIcon /> Filter
+              </h3>
+              <Box className="flex justify-end">
+                <FormGroup aria-label="position" className="justify-end" row>
+                  <FormControlLabel
+                    value="bottom"
+                    control={<Checkbox />}
+                    label="Accepting new patients"
+                    labelPlacement="end"
+                  />
+                  <FormControlLabel
+                    value="end"
+                    control={<Checkbox />}
+                    label="Include inactive locations"
+                    labelPlacement="end"
+                  />
+                </FormGroup>
+              </Box>
+            </Box>
+            <Box className="flex gap-2">
               {/* Name or Specialty Field */}
               <form.AppField
                 name="firstName"
@@ -135,10 +164,47 @@ export default function Search() {
                   return (
                     <Box className="flex flex-1">
                       <TextField
-                        label="Name or Specialty"
-                        placeholder='e.g. "John Doe" or "Cardiology"'
+                        label="Provider Name"
+                        placeholder='e.g. "John Doe"'
                         variant="outlined"
-                        className="bg-white"
+                        size="small"
+                        fullWidth
+                        id={field.name}
+                        name={field.name}
+                        value={firstName}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          setFirstName(value);
+                          field.handleChange(value);
+                        }}
+                        error={
+                          field.state.meta.isTouched &&
+                          field.state.meta.errors.length > 0
+                        }
+                        helperText={
+                          field.state.meta.isTouched &&
+                          field.state.meta.errors.length > 0
+                            ? field.state.meta.errors.map(
+                                (error) => error?.message
+                              )
+                            : null
+                        }
+                      />
+                    </Box>
+                  );
+                }}
+              />
+
+              <form.AppField
+                name="city"
+                children={(field) => {
+                  return (
+                    <Box className="flex flex-1">
+                      <TextField
+                        label="City"
+                        placeholder='e.g. "New York"'
+                        variant="outlined"
+                        size="small"
                         fullWidth
                         id={field.name}
                         name={field.name}
@@ -195,7 +261,7 @@ export default function Search() {
                             label="State"
                             placeholder='e.g. "New York"'
                             variant="outlined"
-                            className="bg-white"
+                            size="small"
                             id={field.name}
                             name={field.name}
                             error={
@@ -218,51 +284,107 @@ export default function Search() {
                 }}
               />
 
-              {/* Organization Field */}
               <form.AppField
-                name="participatingorganization"
+                name="specialty"
                 children={(field) => {
                   return (
                     <Box className="flex flex-1">
-                      <TextField
-                        label="Participating Organization"
-                        placeholder='e.g. "Centene"'
-                        variant="outlined"
-                        className="bg-white"
-                        fullWidth
-                        id={field.name}
-                        name={field.name}
-                        value={organization}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          setOrganization(value);
-                          field.handleChange(value);
+                      <Autocomplete
+                        disablePortal
+                        value={stateValue}
+                        onChange={(event, newValue) => {
+                          setStateValue(newValue);
+                          field.handleChange(newValue?.id || '');
                         }}
-                        error={
-                          field.state.meta.isTouched &&
-                          field.state.meta.errors.length > 0
+                        inputValue={stateInputValue}
+                        onInputChange={(event, newInputValue) => {
+                          setStateInputValue(newInputValue);
+                        }}
+                        options={usStates}
+                        isOptionEqualToValue={(option, value) =>
+                          option.id === value?.id
                         }
-                        helperText={
-                          field.state.meta.isTouched &&
-                          field.state.meta.errors.length > 0
-                            ? field.state.meta.errors.map(
-                                (error) => error?.message
-                              )
-                            : null
-                        }
+                        getOptionLabel={(option) => option.label}
+                        className="flex-1"
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            label="Specialty"
+                            placeholder='e.g. "Cardiology"'
+                            variant="outlined"
+                            size="small"
+                            id={field.name}
+                            name={field.name}
+                            error={
+                              field.state.meta.isTouched &&
+                              field.state.meta.errors.length > 0
+                            }
+                            helperText={
+                              field.state.meta.isTouched &&
+                              field.state.meta.errors.length > 0
+                                ? field.state.meta.errors.map(
+                                    (error) => error?.message
+                                  )
+                                : null
+                            }
+                          />
+                        )}
                       />
                     </Box>
                   );
                 }}
               />
 
-              <IconButton
-                type="submit"
-                disabled={isLoading || mutation.isPending}
-                className="rounded-l-none rounded-r-md p-4 bg-neutral-400 text-white text-xl"
-              >
-                <SearchIcon />
-              </IconButton>
+              <form.AppField
+                name="providerType"
+                children={(field) => {
+                  return (
+                    <Box className="flex flex-1">
+                      <Autocomplete
+                        disablePortal
+                        value={stateValue}
+                        onChange={(event, newValue) => {
+                          setStateValue(newValue);
+                          field.handleChange(newValue?.id || '');
+                        }}
+                        inputValue={stateInputValue}
+                        onInputChange={(event, newInputValue) => {
+                          setStateInputValue(newInputValue);
+                        }}
+                        options={usStates}
+                        isOptionEqualToValue={(option, value) =>
+                          option.id === value?.id
+                        }
+                        getOptionLabel={(option) => option.label}
+                        className="flex-1"
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            label="Provider Type"
+                            placeholder='e.g. "Individual"'
+                            variant="outlined"
+                            size="small"
+                            id={field.name}
+                            name={field.name}
+                            error={
+                              field.state.meta.isTouched &&
+                              field.state.meta.errors.length > 0
+                            }
+                            helperText={
+                              field.state.meta.isTouched &&
+                              field.state.meta.errors.length > 0
+                                ? field.state.meta.errors.map(
+                                    (error) => error?.message
+                                  )
+                                : null
+                            }
+                          />
+                        )}
+                      />
+                    </Box>
+                  );
+                }}
+              />
             </Box>
           </form>
 
@@ -291,7 +413,7 @@ export default function Search() {
               </pre>
             </div>
           )}
-        </Box>
+        </Paper>
       </Suspense>
     </>
   );

@@ -7,7 +7,7 @@ import {
   ToggleButton,
   ToggleButtonGroup,
 } from '@mui/material';
-import Search from '~/components/Search/Search';
+import Filter from '~/components/Filter/Filter';
 import { Outlet } from 'react-router';
 import InteractiveMapWithCards from '~/components/InteractiveMapWithCards/InteractiveMapWithCards';
 import DynamicVirtualizedTable from '~/components/DynamicVirtualizedTable/DynamicVirtualizedTable';
@@ -143,7 +143,7 @@ export default function Index() {
     <Suspense fallback={<p>Loading...</p>}>
       <Box className="flex justify-between max-w-6xl mx-auto p-5">
         <Box>
-          <h1 className="text-4xl font-bold">Centene</h1>
+          <h1 className="text-4xl font-bold">{data.insurance}</h1>
           <p>2,432,218 Providers</p>
           <p>1,004,352 Locations</p>
         </Box>
@@ -158,26 +158,36 @@ export default function Index() {
           <ToggleButton value="location">Locations</ToggleButton>
         </ToggleButtonGroup>
       </Box>
-      <Search />
 
       <Box className="max-w-6xl mx-auto p-5">
-        <h2 className="text-2xl font-bold">Results</h2>
+        <Box className=" rounded-lg pt-8 max-w-8xl mx-auto">
+          <Box className="flex flex-col gap-2 max-w-6xl mx-auto px-8">
+            <h2 className="text-2xl font-bold">
+              Browse providers in-network with {data.insurance}
+            </h2>
+            <p>Filter and browse our directory for accurate provider data</p>
+          </Box>
+        </Box>
         <Box className="flex justify-end mt-4">
           <Box className="w-full max-w-6xl">
             <Box className="border-b border-gray-200 flex flex-row justify-end">
-              <Tabs
-                value={tabValue}
-                onChange={handleTabChange}
-                aria-label="basic tabs example"
-              >
-                <Tab label="Map View" {...a11yProps(0)} />
-                <Tab label="List View" {...a11yProps(1)} />
-              </Tabs>
+              <Box>
+                <Tabs
+                  value={tabValue}
+                  onChange={handleTabChange}
+                  aria-label="basic tabs example"
+                >
+                  <Tab label="Map View" {...a11yProps(0)} />
+                  <Tab label="List View" {...a11yProps(1)} />
+                </Tabs>
+              </Box>
             </Box>
             <CustomTabPanel value={tabValue} index={0}>
+              <Filter />
               <InteractiveMapWithCards />
             </CustomTabPanel>
             <CustomTabPanel value={tabValue} index={1}>
+              <Filter />
               <DynamicVirtualizedTable
                 data={locationData}
                 excludeKeys={['id', 'description', 'position']}
