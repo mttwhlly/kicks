@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
+import MarkerIcon from './Icon';
 
 // Import this here because this component only runs client-side
 import L from 'leaflet';
@@ -72,6 +73,7 @@ const MapComponent = ({ locations, selectedLocation, setSelectedLocation }) => {
         <Marker
           key={location.id}
           position={location.position}
+          icon={MarkerIcon}
           eventHandlers={{
             click: () => handleMarkerClick(location.id),
           }}

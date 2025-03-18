@@ -101,9 +101,9 @@ const InteractiveMapWithCards = () => {
             <div
               key={location.id}
               id={`card-${location.id}`}
-              className={`p-4 rounded-lg shadow-md cursor-pointer transition-all duration-300 ${
+              className={`p-4 rounded-lg shadow-md cursor-pointer transition-all duration-100 ${
                 selectedLocation === location.id
-                  ? 'border-l-4 border-blue-500 bg-blue-50'
+                  ? 'outline-blue-400 outline bg-blue-50'
                   : 'hover:bg-gray-50'
               }`}
               onClick={() => handleCardClick(location.id)}

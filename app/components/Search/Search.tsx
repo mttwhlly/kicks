@@ -224,7 +224,7 @@ export default function Search() {
                     <Box className="flex flex-1">
                       <TextField
                         label="Participating Organization"
-                        placeholder='e.g. "Kaiser Permanente"'
+                        placeholder='e.g. "Centene"'
                         variant="outlined"
                         fullWidth
                         id={field.name}
