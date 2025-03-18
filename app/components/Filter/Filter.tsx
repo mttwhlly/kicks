@@ -127,7 +127,7 @@ export default function ProviderSearch() {
   return (
     <>
       <Suspense fallback={<p>Loading...</p>}>
-        <Paper className="max-w-7xl mx-auto p-4 mb-4 sticky top-0 z-[1001] bg-white">
+        <Paper className="max-w-7xl mx-auto p-4 pt-0 mb-4 sticky top-0 z-[1001] bg-white">
           <form
             onSubmit={(e) => {
               e.preventDefault();
