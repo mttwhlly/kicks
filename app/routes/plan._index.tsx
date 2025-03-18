@@ -134,11 +134,16 @@ export default function Index() {
   ) => {
     setType(newAlignment);
   };
+
+  const data = {
+    insurance: 'Centene',
+  };
+
   return (
     <Suspense fallback={<p>Loading...</p>}>
       <Box className="flex justify-between max-w-6xl mx-auto p-5">
         <Box>
-          <h1 className="text-3xl font-bold">Centene</h1>
+          <h1 className="text-4xl font-bold">Centene</h1>
           <p>2,432,218 Providers</p>
           <p>1,004,352 Locations</p>
         </Box>

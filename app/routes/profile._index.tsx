@@ -87,7 +87,7 @@ export default function Profile() {
         <Link to="/plan" className="p-3 border-1 w-fit border-gray-300 rounded">
           <ArrowBackIosIcon /> Back to Search
         </Link>
-        <h1 className="text-2xl font-bold">{data.name}</h1>
+        <h1 className="text-4xl font-bold">{data.name}</h1>
         <p>{data.pronouns}</p>
         <p>{data.primarySpecialty}</p>
         <p>
@@ -97,7 +97,7 @@ export default function Profile() {
             )
             .map((location) => location.city + ', ' + location.state)}
         </p>
-        <h2 className="font-bold">{`Health Plan Network (${data.healthPlanNetwork.count})`}</h2>
+        <h2 className="text-xl font-bold">{`Health Plan Network (${data.healthPlanNetwork.count})`}</h2>
         <Box className="flex flex-row gap-4 overflow-x-scroll">
           <Stack direction="row" spacing={2}>
             {data.healthPlanNetwork.plans.map((plan) => (
@@ -105,7 +105,7 @@ export default function Profile() {
             ))}
           </Stack>
         </Box>
-        <h2 className="font-bold">Contact Information</h2>
+        <h2 className="text-xl font-bold">Contact Information</h2>
         <p>
           <PublicIcon /> {data.contactInfo.website}
         </p>
@@ -114,7 +114,7 @@ export default function Profile() {
             <EmailOutlinedIcon /> {data.contactInfo.email}
           </a>
         </p>
-        <h2 className="font-bold">
+        <h2 className="text-xl font-bold">
           Public Notice ({data.publicNotice.length})
         </h2>
         <Card className="p-4 my-2">
@@ -122,7 +122,7 @@ export default function Profile() {
             ? 'Some concerns here...'
             : 'No known concerns to the public'}
         </Card>
-        <h2 className="font-bold">Where to find this provider</h2>
+        <h2 className="text-xl font-bold">Where to find this provider</h2>
         {data.locations
           .filter(
             (location) => location.type.toLowerCase() === 'primary location'
