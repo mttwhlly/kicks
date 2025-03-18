@@ -119,7 +119,7 @@ export default function Search() {
   return (
     <>
       <Suspense fallback={<p>Loading...</p>}>
-        <Box className="p-4 gap-4 max-w-4xl mx-auto">
+        <Box className="my-8 py-8 max-w-5xl mx-auto">
           <form
             onSubmit={(e) => {
               e.preventDefault();
