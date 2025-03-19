@@ -1,15 +1,6 @@
 import React, { Suspense, useState, useEffect } from 'react';
-import {
-  Autocomplete,
-  Box,
-  IconButton,
-  InputAdornment,
-  TextField,
-} from '@mui/material';
+import { Autocomplete, Box, IconButton, TextField } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
-import RoomOutlinedIcon from '@mui/icons-material/RoomOutlined';
-import LocalAtmOutlinedIcon from '@mui/icons-material/LocalAtmOutlined';
-import AccountCircleOutlinedIcon from '@mui/icons-material/AccountCircleOutlined';
 import { usStates } from '~/constants/constants';
 import { z } from 'zod';
 import type { USStateType } from '~/types/usStates';
@@ -44,16 +35,46 @@ const fetchProviders = async (searchParams: Record<string, string>) => {
   return response.json();
 };
 
+// Function to fetch name/specialty suggestions
+const fetchNameSuggestions = async (query: string) => {
+  if (!query || query.length < 2) return [];
+
+  const url = `https://occ8ko8kw44kckgk8sw8wk84.mttwhlly.cc/providers?firstName=${encodeURIComponent(
+    query
+  )}`;
+
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(
+      errorText || `Request failed with status ${response.status}`
+    );
+  }
+
+  return response.json();
+};
+
 export default function Search() {
-  // Form state for each field
-  const [firstName, setFirstName] = useState('');
+  // State for Autocomplete
+  const [nameInputValue, setNameInputValue] = useState('');
+  const [nameOptions, setNameOptions] = useState<string[]>([]);
+  const [selectedName, setSelectedName] = useState<string | null>(null);
+
+  // Other form states
   const [stateValue, setStateValue] = useState<USStateType | null>(null);
   const [stateInputValue, setStateInputValue] = useState('');
   const [organization, setOrganization] = useState('');
   const [orgInputValue, setOrgInputValue] = useState('');
 
   // Debounce the search inputs to prevent excessive API calls
-  const debouncedName = useDebounce(firstName, 500);
+  const debouncedNameInput = useDebounce(nameInputValue, 300);
+  const debouncedSelectedName = useDebounce(selectedName || '', 500);
   const debouncedState = useDebounce(stateValue?.id, 500);
   const debouncedOrg = useDebounce(organization, 500);
 
@@ -81,9 +102,35 @@ export default function Search() {
     },
   });
 
+  // Fetch name/specialty suggestions when input changes
+  const { data: suggestions, isLoading: suggestionsLoading } = useQuery({
+    queryKey: ['nameSuggestions', debouncedNameInput],
+    queryFn: () => fetchNameSuggestions(debouncedNameInput),
+    enabled: debouncedNameInput.length >= 2,
+    refetchOnWindowFocus: false,
+  });
+
+  // Update the options when suggestions are received
+  useEffect(() => {
+    if (suggestions) {
+      // Extract unique provider names from the response
+      // Based on the array of objects with 'name' property
+      const providerNames = Array.isArray(suggestions)
+        ? suggestions.map((provider) => provider.name || '')
+        : [];
+
+      // Filter out duplicates and empty strings
+      const uniqueNames = [...new Set(providerNames)].filter(
+        (name) => name.trim() !== ''
+      );
+
+      setNameOptions(uniqueNames);
+    }
+  }, [suggestions]);
+
   // Create a search params object for React Query
   const searchParams = {
-    firstName: debouncedName,
+    firstName: debouncedSelectedName,
     state: debouncedState || '',
     participatingorganization: debouncedOrg,
   };
@@ -128,38 +175,53 @@ export default function Search() {
             }}
           >
             <Box className="flex">
-              {/* Name or Specialty Field */}
+              {/* Name or Specialty Field with Autocomplete */}
               <form.AppField
                 name="firstName"
                 children={(field) => {
                   return (
                     <Box className="flex flex-1">
-                      <TextField
-                        label="Name or Specialty"
-                        placeholder='e.g. "John Doe" or "Cardiology"'
-                        variant="outlined"
-                        className="bg-white"
-                        fullWidth
-                        id={field.name}
-                        name={field.name}
-                        value={firstName}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          setFirstName(value);
-                          field.handleChange(value);
+                      <Autocomplete
+                        freeSolo
+                        options={nameOptions}
+                        inputValue={nameInputValue}
+                        onInputChange={(event, newInputValue) => {
+                          setNameInputValue(newInputValue);
+                          field.handleChange(newInputValue);
                         }}
-                        error={
-                          field.state.meta.isTouched &&
-                          field.state.meta.errors.length > 0
-                        }
-                        helperText={
-                          field.state.meta.isTouched &&
-                          field.state.meta.errors.length > 0
-                            ? field.state.meta.errors.map(
-                                (error) => error?.message
-                              )
-                            : null
-                        }
+                        value={selectedName}
+                        onChange={(event, newValue) => {
+                          setSelectedName(newValue);
+                          field.handleChange(newValue || '');
+                        }}
+                        loading={suggestionsLoading}
+                        loadingText="Loading providers..."
+                        noOptionsText="No providers found"
+                        className="flex-1"
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            label="Name or Specialty"
+                            placeholder='e.g. "John Doe" or "Cardiology"'
+                            variant="outlined"
+                            className="bg-white"
+                            fullWidth
+                            id={field.name}
+                            name={field.name}
+                            error={
+                              field.state.meta.isTouched &&
+                              field.state.meta.errors.length > 0
+                            }
+                            helperText={
+                              field.state.meta.isTouched &&
+                              field.state.meta.errors.length > 0
+                                ? field.state.meta.errors.map(
+                                    (error) => error?.message
+                                  )
+                                : null
+                            }
+                          />
+                        )}
                       />
                     </Box>
                   );
