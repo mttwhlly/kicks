@@ -120,14 +120,16 @@ export default function Search() {
   // Setup React Query mutation for search
   const searchMutation = useMutation({
     mutationFn: async (searchData: Record<string, string>) => {
+      const specialtyOrPractitioner = searchData.nameGuid || '';
+      const stateGuid = searchData.stateGuid || '';
+      const participatingOrganization = searchData.orgGuid || '';
       const response = await fetch(
-        'http://localhost:5041/api/search/providers',
+        `http://localhost:5041/api/search?specialtyOrPractitioner${specialtyOrPractitioner}&stateGuid=${stateGuid}&participatingOrganization=${participatingOrganization}`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify(searchData),
         }
       );
 
