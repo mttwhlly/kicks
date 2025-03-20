@@ -108,6 +108,10 @@ const fetchStates = async () => {
 };
 
 export default function Search() {
+  // Navigation hook (can use the appropriate router for your app)
+  const navigate = (url) => {
+    window.location.href = url;
+  };
   // State for Name Autocomplete
   const [nameInputValue, setNameInputValue] = useState('');
   const [nameOptions, setNameOptions] = useState<string[]>([]);
@@ -115,8 +119,13 @@ export default function Search() {
 
   // State for Organization Autocomplete
   const [orgInputValue, setOrgInputValue] = useState('');
-  const [orgOptions, setOrgOptions] = useState<string[]>([]);
-  const [selectedOrg, setSelectedOrg] = useState<string | null>(null);
+  const [orgOptions, setOrgOptions] = useState<
+    Array<{ name: string; guid: string }>
+  >([]);
+  const [selectedOrg, setSelectedOrg] = useState<{
+    name: string;
+    guid: string;
+  } | null>(null);
 
   // State for States dropdown
   const [states, setStates] = useState<USStateType[]>([]);
@@ -145,7 +154,13 @@ export default function Search() {
       }),
     },
     onSubmit: ({ value }) => {
-      // This is still useful for the manual search button
+      // If organization is selected, navigate to organization-specific URL
+      if (selectedOrg?.guid) {
+        navigate(`/organization/${selectedOrg.guid}`);
+        return;
+      }
+
+      // Otherwise perform normal search
       mutation.mutateAsync({
         firstName: value.firstName,
         state: value.state,
@@ -193,18 +208,19 @@ export default function Search() {
   // Update the organization options when suggestions are received
   useEffect(() => {
     if (orgSuggestions) {
-      // Extract unique organization names from the response
-      // Assuming the response contains an array of organization objects with 'name' property
-      const organizationNames = Array.isArray(orgSuggestions)
-        ? orgSuggestions.map((org) => org.name || '')
+      // Extract organization data from the response
+      // Assuming the response contains an array of organization objects with 'name' and 'guid' properties
+      const organizations = Array.isArray(orgSuggestions)
+        ? orgSuggestions.map((org) => ({
+            name: org.name || '',
+            guid: org.guid || org.id || '', // Adapt based on your API response
+          }))
         : [];
 
-      // Filter out duplicates and empty strings
-      const uniqueOrgs = [...new Set(organizationNames)].filter(
-        (name) => name.trim() !== ''
-      );
+      // Filter out items with empty names
+      const validOrgs = organizations.filter((org) => org.name.trim() !== '');
 
-      setOrgOptions(uniqueOrgs);
+      setOrgOptions(validOrgs);
     }
   }, [orgSuggestions]);
 
@@ -235,7 +251,7 @@ export default function Search() {
   const searchParams = {
     firstName: debouncedSelectedName,
     state: debouncedState || '',
-    participatingorganization: debouncedSelectedOrg,
+    participatingorganization: selectedOrg?.name || '',
   };
 
   // Use React Query to fetch data when debounced values change
@@ -412,8 +428,29 @@ export default function Search() {
                         }}
                         value={selectedOrg}
                         onChange={(event, newValue) => {
-                          setSelectedOrg(newValue);
-                          field.handleChange(newValue || '');
+                          if (typeof newValue === 'string') {
+                            // Handle free text input
+                            setSelectedOrg({
+                              name: newValue,
+                              guid: '',
+                            });
+                            field.handleChange(newValue);
+                          } else {
+                            // Handle selection from dropdown
+                            setSelectedOrg(newValue);
+                            field.handleChange(newValue?.name || '');
+                          }
+                        }}
+                        getOptionLabel={(option) => {
+                          // Handle both string and object options
+                          if (typeof option === 'string') {
+                            return option;
+                          }
+                          return option.name || '';
+                        }}
+                        isOptionEqualToValue={(option, value) => {
+                          if (!option || !value) return false;
+                          return option.guid === value.guid;
                         }}
                         loading={orgSuggestionsLoading}
                         loadingText="Loading organizations..."
