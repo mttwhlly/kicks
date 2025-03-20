@@ -1,40 +1,11 @@
 import React, { Suspense, useState, useEffect } from 'react';
 import { Autocomplete, Box, IconButton, TextField } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
-// We'll fetch states from API instead of using the constants
-// import { usStates } from '~/constants/constants';
 import { z } from 'zod';
 import type { USStateType } from '~/types/usStates';
 import { useAppForm } from '~/hooks/use-form';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import useDebounce from '~/hooks/use-debounce';
-
-// Function to fetch providers based on search criteria
-const fetchProviders = async (searchParams: Record<string, string>) => {
-  const params = new URLSearchParams();
-
-  Object.entries(searchParams).forEach(([key, value]) => {
-    if (value) params.append(key, value);
-  });
-
-  const url = `https://occ8ko8kw44kckgk8sw8wk84.mttwhlly.cc/providers?${params.toString()}`;
-
-  const response = await fetch(url, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(
-      errorText || `Request failed with status ${response.status}`
-    );
-  }
-
-  return response.json();
-};
 
 // Function to fetch name/specialty suggestions
 const fetchNameSuggestions = async (query: string) => {
@@ -108,14 +79,20 @@ const fetchStates = async () => {
 };
 
 export default function Search() {
-  // Navigation hook
-  const navigate = (url) => {
+  // Navigation helper
+  const navigate = (url: string) => {
     window.location.href = url;
   };
+
   // State for Name Autocomplete
   const [nameInputValue, setNameInputValue] = useState('');
-  const [nameOptions, setNameOptions] = useState<string[]>([]);
-  const [selectedName, setSelectedName] = useState<string | null>(null);
+  const [nameOptions, setNameOptions] = useState<
+    Array<{ name: string; guid: string }>
+  >([]);
+  const [selectedName, setSelectedName] = useState<{
+    name: string;
+    guid: string;
+  } | null>(null);
 
   // State for Organization Autocomplete
   const [orgInputValue, setOrgInputValue] = useState('');
@@ -128,16 +105,55 @@ export default function Search() {
   } | null>(null);
 
   // State for States dropdown
-  const [states, setStates] = useState<USStateType[]>([]);
-  const [stateValue, setStateValue] = useState<USStateType | null>(null);
+  const [states, setStates] = useState<Array<USStateType & { guid: string }>>(
+    []
+  );
+  const [stateValue, setStateValue] = useState<
+    (USStateType & { guid: string }) | null
+  >(null);
   const [stateInputValue, setStateInputValue] = useState('');
+
+  // State for search results
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [error, setError] = useState<Error | null>(null);
+
+  // Setup React Query mutation for search
+  const searchMutation = useMutation({
+    mutationFn: async (searchData: Record<string, string>) => {
+      const response = await fetch(
+        'http://localhost:5041/api/search/providers',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(searchData),
+        }
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(
+          errorText || `Request failed with status ${response.status}`
+        );
+      }
+
+      return response.json();
+    },
+    onSuccess: (data) => {
+      setSearchResults(data);
+    },
+    onError: (err) => {
+      setError(
+        err instanceof Error ? err : new Error('An unknown error occurred')
+      );
+      console.error('Search error:', err);
+    },
+  });
 
   // Debounce the search inputs to prevent excessive API calls
   const debouncedNameInput = useDebounce(nameInputValue, 300);
-  const debouncedSelectedName = useDebounce(selectedName || '', 500);
   const debouncedOrgInput = useDebounce(orgInputValue, 300);
-  const debouncedSelectedOrg = useDebounce(selectedOrg || '', 500);
-  const debouncedState = useDebounce(stateValue?.id, 500);
 
   // Initialize form
   const form = useAppForm({
@@ -154,18 +170,52 @@ export default function Search() {
       }),
     },
     onSubmit: ({ value }) => {
-      // If organization is selected, navigate to organization-specific URL
+      setError(null);
+
+      // CASE 1: If organization is selected, navigate to organization-specific URL with query params
       if (selectedOrg?.guid) {
-        navigate(`/organization/${selectedOrg.guid}/map`);
+        // Build query parameters for other fields if they have values
+        const queryParams = new URLSearchParams();
+
+        if (selectedName?.guid) {
+          queryParams.append('nameGuid', selectedName.guid);
+        }
+
+        if (stateValue?.guid) {
+          queryParams.append('stateGuid', stateValue.guid);
+        }
+
+        // Construct URL with dynamic route and query parameters
+        const queryString = queryParams.toString();
+        const route = `/organization/${selectedOrg.guid}${
+          queryString ? `?${queryString}` : ''
+        }`;
+
+        navigate(route);
         return;
       }
 
-      // Otherwise perform normal search
-      mutation.mutateAsync({
-        firstName: value.firstName,
-        state: value.state,
-        participatingorganization: value.participatingorganization,
-      });
+      // CASE 2: If participating organization is not selected, send a POST request
+      const requestData: Record<string, string> = {};
+
+      // Add nameGuid if available
+      if (selectedName?.guid) {
+        requestData.nameGuid = selectedName.guid;
+      }
+
+      // Add stateGuid if available
+      if (stateValue?.guid) {
+        requestData.stateGuid = stateValue.guid;
+      }
+
+      // Only proceed if we have at least one guid to search with
+      if (Object.keys(requestData).length === 0) {
+        setError(new Error('Please provide at least one search parameter'));
+        return;
+      }
+
+      // Execute the mutation
+      searchMutation.mutate(requestData);
     },
   });
 
@@ -190,18 +240,20 @@ export default function Search() {
   // Update the name options when suggestions are received
   useEffect(() => {
     if (nameSuggestions) {
-      // Extract unique provider names from the response
-      // Based on the array of objects with 'name' property
-      const providerNames = Array.isArray(nameSuggestions)
-        ? nameSuggestions.map((provider) => provider.name || '')
+      // Transform the API response to include name and guid
+      const providers = Array.isArray(nameSuggestions)
+        ? nameSuggestions.map((provider) => ({
+            name: provider.name || '',
+            guid: provider.guid || provider.practitionerId || '',
+          }))
         : [];
 
-      // Filter out duplicates and empty strings
-      const uniqueNames = [...new Set(providerNames)].filter(
-        (name) => name.trim() !== ''
+      // Filter out items with empty names
+      const validProviders = providers.filter(
+        (provider) => provider.name.trim() !== ''
       );
 
-      setNameOptions(uniqueNames);
+      setNameOptions(validProviders);
     }
   }, [nameSuggestions]);
 
@@ -212,7 +264,7 @@ export default function Search() {
       const organizations = Array.isArray(orgSuggestions)
         ? orgSuggestions.map((org) => ({
             name: org.name || '',
-            guid: org.participatingOrganizationId || '', 
+            guid: org.participatingOrganizationId || '',
           }))
         : [];
 
@@ -233,53 +285,18 @@ export default function Search() {
   // Process states data when it's loaded
   useEffect(() => {
     if (statesData) {
-      // Transform the API response into the format needed for the Autocomplete
-      // Assuming the response is an array of state objects with 'code' and 'name' properties
+      // Transform the API response to include guid
       const formattedStates = Array.isArray(statesData)
         ? statesData.map((state) => ({
             id: state.stateCode || '',
             label: state.stateName || '',
+            guid: state.stateId || '',
           }))
         : [];
 
       setStates(formattedStates);
     }
   }, [statesData]);
-
-  // Create a search params object for React Query
-  const searchParams = {
-    firstName: debouncedSelectedName,
-    state: debouncedState || '',
-    participatingorganization: selectedOrg?.name || '',
-  };
-
-  // Use React Query to fetch data when debounced values change
-  const { data, isLoading, error } = useQuery({
-    queryKey: ['providers', searchParams],
-    queryFn: () => fetchProviders(searchParams),
-    // Only run the query if at least one search parameter has a value
-    enabled: Object.values(searchParams).some((value) => !!value),
-    // Avoid refetching on window focus
-    refetchOnWindowFocus: false,
-  });
-
-  // Mutation for manual search button
-  const mutation = useMutation({
-    mutationFn: fetchProviders,
-    onSuccess: (data) => {
-      console.log('Manual search successful:', data);
-    },
-    onError: (error) => {
-      console.error('Manual search error:', error);
-    },
-  });
-
-  // Display results when they change
-  useEffect(() => {
-    if (data) {
-      console.log('Search results:', data);
-    }
-  }, [data]);
 
   return (
     <>
@@ -309,8 +326,32 @@ export default function Search() {
                         }}
                         value={selectedName}
                         onChange={(event, newValue) => {
-                          setSelectedName(newValue);
-                          field.handleChange(newValue || '');
+                          if (typeof newValue === 'string') {
+                            // Handle free text input
+                            setSelectedName({
+                              name: newValue,
+                              guid: '',
+                            });
+                          } else {
+                            // Handle selection from dropdown
+                            setSelectedName(newValue);
+                          }
+                          field.handleChange(
+                            typeof newValue === 'string'
+                              ? newValue
+                              : newValue?.name || ''
+                          );
+                        }}
+                        getOptionLabel={(option) => {
+                          // Handle both string and object options
+                          if (typeof option === 'string') {
+                            return option;
+                          }
+                          return option.name || '';
+                        }}
+                        isOptionEqualToValue={(option, value) => {
+                          if (!option || !value) return false;
+                          return option.guid === value.guid;
                         }}
                         loading={nameSuggestionsLoading}
                         loadingText="Loading providers..."
@@ -433,12 +474,15 @@ export default function Search() {
                               name: newValue,
                               guid: '',
                             });
-                            field.handleChange(newValue);
                           } else {
                             // Handle selection from dropdown
                             setSelectedOrg(newValue);
-                            field.handleChange(newValue?.name || '');
                           }
+                          field.handleChange(
+                            typeof newValue === 'string'
+                              ? newValue
+                              : newValue?.name || ''
+                          );
                         }}
                         getOptionLabel={(option) => {
                           // Handle both string and object options
@@ -487,7 +531,7 @@ export default function Search() {
 
               <IconButton
                 type="submit"
-                disabled={isLoading || mutation.isPending}
+                disabled={searchMutation.isPending}
                 className="rounded-l-none rounded-r-md p-4 bg-neutral-400 text-white text-xl"
               >
                 <SearchIcon />
@@ -496,28 +540,36 @@ export default function Search() {
           </form>
 
           {/* Display loading state */}
-          {(isLoading || mutation.isPending) && <p>Loading results...</p>}
+          {searchMutation.isPending && <p>Loading results...</p>}
 
           {/* Display error message */}
-          {(error || mutation.error) && (
+          {(error || searchMutation.error) && (
             <p className="text-red-500">
               Error:{' '}
-              {error instanceof Error
-                ? error.message
-                : mutation.error instanceof Error
-                ? mutation.error.message
-                : 'Unknown error occurred'}
+              {error?.message ||
+                (searchMutation.error instanceof Error
+                  ? searchMutation.error.message
+                  : 'Unknown error occurred')}
             </p>
           )}
 
-          {/* Display results */}
-          {data && (
+          {/* Display search results */}
+          {searchResults.length > 0 && (
             <div className="mt-4">
               <h2 className="text-xl font-bold">Search Results</h2>
-              {/* Add your results rendering logic here */}
-              <pre className="mt-2 p-4 bg-gray-100 rounded overflow-auto max-h-60">
-                {JSON.stringify(data, null, 2)}
-              </pre>
+              <div className="mt-2 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {searchResults.map((result, index) => (
+                  <div key={index} className="p-4 bg-white rounded shadow">
+                    <h3 className="font-semibold">{result.name}</h3>
+                    {result.specialty && <p>Specialty: {result.specialty}</p>}
+                    {result.organization && (
+                      <p>Organization: {result.organization}</p>
+                    )}
+                    {result.address && <p>Address: {result.address}</p>}
+                    {result.phone && <p>Phone: {result.phone}</p>}
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </Box>
