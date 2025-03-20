@@ -60,23 +60,52 @@ const fetchNameSuggestions = async (query: string) => {
   return response.json();
 };
 
+// Function to fetch organization suggestions
+const fetchOrgSuggestions = async (query: string) => {
+  if (!query || query.length < 2) return [];
+
+  const url = `https://occ8ko8kw44kckgk8sw8wk84.mttwhlly.cc/organizations?name=${encodeURIComponent(
+    query
+  )}`;
+
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(
+      errorText || `Request failed with status ${response.status}`
+    );
+  }
+
+  return response.json();
+};
+
 export default function Search() {
-  // State for Autocomplete
+  // State for Name Autocomplete
   const [nameInputValue, setNameInputValue] = useState('');
   const [nameOptions, setNameOptions] = useState<string[]>([]);
   const [selectedName, setSelectedName] = useState<string | null>(null);
 
+  // State for Organization Autocomplete
+  const [orgInputValue, setOrgInputValue] = useState('');
+  const [orgOptions, setOrgOptions] = useState<string[]>([]);
+  const [selectedOrg, setSelectedOrg] = useState<string | null>(null);
+
   // Other form states
   const [stateValue, setStateValue] = useState<USStateType | null>(null);
   const [stateInputValue, setStateInputValue] = useState('');
-  const [organization, setOrganization] = useState('');
-  const [orgInputValue, setOrgInputValue] = useState('');
 
   // Debounce the search inputs to prevent excessive API calls
   const debouncedNameInput = useDebounce(nameInputValue, 300);
   const debouncedSelectedName = useDebounce(selectedName || '', 500);
+  const debouncedOrgInput = useDebounce(orgInputValue, 300);
+  const debouncedSelectedOrg = useDebounce(selectedOrg || '', 500);
   const debouncedState = useDebounce(stateValue?.id, 500);
-  const debouncedOrg = useDebounce(organization, 500);
 
   // Initialize form
   const form = useAppForm({
@@ -103,20 +132,30 @@ export default function Search() {
   });
 
   // Fetch name/specialty suggestions when input changes
-  const { data: suggestions, isLoading: suggestionsLoading } = useQuery({
-    queryKey: ['nameSuggestions', debouncedNameInput],
-    queryFn: () => fetchNameSuggestions(debouncedNameInput),
-    enabled: debouncedNameInput.length >= 2,
+  const { data: nameSuggestions, isLoading: nameSuggestionsLoading } = useQuery(
+    {
+      queryKey: ['nameSuggestions', debouncedNameInput],
+      queryFn: () => fetchNameSuggestions(debouncedNameInput),
+      enabled: debouncedNameInput.length >= 2,
+      refetchOnWindowFocus: false,
+    }
+  );
+
+  // Fetch organization suggestions when input changes
+  const { data: orgSuggestions, isLoading: orgSuggestionsLoading } = useQuery({
+    queryKey: ['orgSuggestions', debouncedOrgInput],
+    queryFn: () => fetchOrgSuggestions(debouncedOrgInput),
+    enabled: debouncedOrgInput.length >= 2,
     refetchOnWindowFocus: false,
   });
 
-  // Update the options when suggestions are received
+  // Update the name options when suggestions are received
   useEffect(() => {
-    if (suggestions) {
+    if (nameSuggestions) {
       // Extract unique provider names from the response
       // Based on the array of objects with 'name' property
-      const providerNames = Array.isArray(suggestions)
-        ? suggestions.map((provider) => provider.name || '')
+      const providerNames = Array.isArray(nameSuggestions)
+        ? nameSuggestions.map((provider) => provider.name || '')
         : [];
 
       // Filter out duplicates and empty strings
@@ -126,13 +165,31 @@ export default function Search() {
 
       setNameOptions(uniqueNames);
     }
-  }, [suggestions]);
+  }, [nameSuggestions]);
+
+  // Update the organization options when suggestions are received
+  useEffect(() => {
+    if (orgSuggestions) {
+      // Extract unique organization names from the response
+      // Assuming the response contains an array of organization objects with 'name' property
+      const organizationNames = Array.isArray(orgSuggestions)
+        ? orgSuggestions.map((org) => org.name || '')
+        : [];
+
+      // Filter out duplicates and empty strings
+      const uniqueOrgs = [...new Set(organizationNames)].filter(
+        (name) => name.trim() !== ''
+      );
+
+      setOrgOptions(uniqueOrgs);
+    }
+  }, [orgSuggestions]);
 
   // Create a search params object for React Query
   const searchParams = {
     firstName: debouncedSelectedName,
     state: debouncedState || '',
-    participatingorganization: debouncedOrg,
+    participatingorganization: debouncedSelectedOrg,
   };
 
   // Use React Query to fetch data when debounced values change
@@ -194,7 +251,7 @@ export default function Search() {
                           setSelectedName(newValue);
                           field.handleChange(newValue || '');
                         }}
-                        loading={suggestionsLoading}
+                        loading={nameSuggestionsLoading}
                         loadingText="Loading providers..."
                         noOptionsText="No providers found"
                         className="flex-1"
@@ -280,38 +337,53 @@ export default function Search() {
                 }}
               />
 
-              {/* Organization Field */}
+              {/* Organization Field with Autocomplete */}
               <form.AppField
                 name="participatingorganization"
                 children={(field) => {
                   return (
                     <Box className="flex flex-1">
-                      <TextField
-                        label="Participating Organization"
-                        placeholder='e.g. "Centene"'
-                        variant="outlined"
-                        className="bg-white"
-                        fullWidth
-                        id={field.name}
-                        name={field.name}
-                        value={organization}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          setOrganization(value);
-                          field.handleChange(value);
+                      <Autocomplete
+                        freeSolo
+                        options={orgOptions}
+                        inputValue={orgInputValue}
+                        onInputChange={(event, newInputValue) => {
+                          setOrgInputValue(newInputValue);
+                          field.handleChange(newInputValue);
                         }}
-                        error={
-                          field.state.meta.isTouched &&
-                          field.state.meta.errors.length > 0
-                        }
-                        helperText={
-                          field.state.meta.isTouched &&
-                          field.state.meta.errors.length > 0
-                            ? field.state.meta.errors.map(
-                                (error) => error?.message
-                              )
-                            : null
-                        }
+                        value={selectedOrg}
+                        onChange={(event, newValue) => {
+                          setSelectedOrg(newValue);
+                          field.handleChange(newValue || '');
+                        }}
+                        loading={orgSuggestionsLoading}
+                        loadingText="Loading organizations..."
+                        noOptionsText="No organizations found"
+                        className="flex-1"
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            label="Participating Organization"
+                            placeholder='e.g. "Centene"'
+                            variant="outlined"
+                            className="bg-white"
+                            fullWidth
+                            id={field.name}
+                            name={field.name}
+                            error={
+                              field.state.meta.isTouched &&
+                              field.state.meta.errors.length > 0
+                            }
+                            helperText={
+                              field.state.meta.isTouched &&
+                              field.state.meta.errors.length > 0
+                                ? field.state.meta.errors.map(
+                                    (error) => error?.message
+                                  )
+                                : null
+                            }
+                          />
+                        )}
                       />
                     </Box>
                   );
