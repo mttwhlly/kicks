@@ -1,7 +1,8 @@
 import React, { Suspense, useState, useEffect } from 'react';
 import { Autocomplete, Box, IconButton, TextField } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
-import { usStates } from '~/constants/constants';
+// We'll fetch states from API instead of using the constants
+// import { usStates } from '~/constants/constants';
 import { z } from 'zod';
 import type { USStateType } from '~/types/usStates';
 import { useAppForm } from '~/hooks/use-form';
@@ -85,6 +86,27 @@ const fetchOrgSuggestions = async (query: string) => {
   return response.json();
 };
 
+// Function to fetch states from API
+const fetchStates = async () => {
+  const url = `https://occ8ko8kw44kckgk8sw8wk84.mttwhlly.cc/states`;
+
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(
+      errorText || `Request failed with status ${response.status}`
+    );
+  }
+
+  return response.json();
+};
+
 export default function Search() {
   // State for Name Autocomplete
   const [nameInputValue, setNameInputValue] = useState('');
@@ -96,7 +118,8 @@ export default function Search() {
   const [orgOptions, setOrgOptions] = useState<string[]>([]);
   const [selectedOrg, setSelectedOrg] = useState<string | null>(null);
 
-  // Other form states
+  // State for States dropdown
+  const [states, setStates] = useState<USStateType[]>([]);
   const [stateValue, setStateValue] = useState<USStateType | null>(null);
   const [stateInputValue, setStateInputValue] = useState('');
 
@@ -184,6 +207,29 @@ export default function Search() {
       setOrgOptions(uniqueOrgs);
     }
   }, [orgSuggestions]);
+
+  // Fetch states on component mount
+  const { data: statesData, isLoading: statesLoading } = useQuery({
+    queryKey: ['states'],
+    queryFn: fetchStates,
+    refetchOnWindowFocus: false,
+  });
+
+  // Process states data when it's loaded
+  useEffect(() => {
+    if (statesData) {
+      // Transform the API response into the format needed for the Autocomplete
+      // Assuming the response is an array of state objects with 'code' and 'name' properties
+      const formattedStates = Array.isArray(statesData)
+        ? statesData.map((state) => ({
+            id: state.code || state.abbreviation || '',
+            label: state.name || '',
+          }))
+        : [];
+
+      setStates(formattedStates);
+    }
+  }, [statesData]);
 
   // Create a search params object for React Query
   const searchParams = {
@@ -302,7 +348,7 @@ export default function Search() {
                         onInputChange={(event, newInputValue) => {
                           setStateInputValue(newInputValue);
                         }}
-                        options={usStates}
+                        options={states}
                         isOptionEqualToValue={(option, value) =>
                           option.id === value?.id
                         }
@@ -329,6 +375,19 @@ export default function Search() {
                                   )
                                 : null
                             }
+                            InputProps={{
+                              ...params.InputProps,
+                              endAdornment: (
+                                <>
+                                  {statesLoading ? (
+                                    <div className="mr-2 text-sm text-gray-400">
+                                      Loading...
+                                    </div>
+                                  ) : null}
+                                  {params.InputProps.endAdornment}
+                                </>
+                              ),
+                            }}
                           />
                         )}
                       />
