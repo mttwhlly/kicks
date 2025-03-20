@@ -1,4 +1,224 @@
-import { Box, Skeleton } from '@mui/material';
+import { Box, Card, Chip, Skeleton } from '@mui/material';
+
+/**
+ * Skeleton for the home page search component
+ */
+export const SearchSkeleton = () => {
+  return (
+    <Box className="max-w-6xl mx-auto p-6">
+      <Box className="flex flex-col items-center mb-6">
+        <Skeleton
+          variant="rectangular"
+          width="60%"
+          height={50}
+          className="mb-4 rounded-lg"
+        />
+        <Skeleton
+          variant="rectangular"
+          width="80%"
+          height={40}
+          className="rounded-lg"
+        />
+      </Box>
+      <Box className="flex flex-col md:flex-row gap-4 justify-center">
+        <Skeleton
+          variant="rectangular"
+          width={300}
+          height={60}
+          className="rounded-lg"
+        />
+        <Skeleton
+          variant="rectangular"
+          width={150}
+          height={60}
+          className="rounded-lg"
+        />
+      </Box>
+    </Box>
+  );
+};
+
+/**
+ * Skeleton for the home page
+ */
+export const HomePageSkeleton = () => {
+  return (
+    <Box className="mx-auto">
+      <Box className="text-center gap-4 mt-12 mb-8 flex flex-col items-center">
+        <Skeleton variant="text" width={300} height={40} />
+        <Skeleton variant="text" width={200} height={30} />
+      </Box>
+      <SearchSkeleton />
+    </Box>
+  );
+};
+
+/**
+ * Skeleton for the provider profile header
+ */
+export const ProfileHeaderSkeleton = () => {
+  return (
+    <Box className="max-w-3xl mx-auto gap-4 mt-12 mb-8 flex flex-col">
+      <Skeleton
+        variant="rectangular"
+        width={120}
+        height={40}
+        className="rounded-lg"
+      />
+      <Skeleton variant="text" width="80%" height={50} />
+      <Skeleton variant="text" width="40%" height={24} />
+      <Skeleton variant="text" width="60%" height={24} />
+      <Skeleton variant="text" width="30%" height={24} />
+    </Box>
+  );
+};
+
+/**
+ * Skeleton for health plan network section
+ */
+export const HealthPlanNetworkSkeleton = () => {
+  return (
+    <Box className="max-w-3xl mx-auto">
+      <Skeleton variant="text" width={250} height={32} className="mb-4" />
+      <Box className="flex flex-row gap-4 overflow-x-hidden">
+        {Array.from({ length: 6 }).map((_, index) => (
+          <Skeleton
+            key={index}
+            variant="rectangular"
+            width={120}
+            height={80}
+            className="rounded-lg"
+          />
+        ))}
+      </Box>
+    </Box>
+  );
+};
+
+/**
+ * Skeleton for contact information section
+ */
+export const ContactInfoSkeleton = () => {
+  return (
+    <Box className="max-w-3xl mx-auto">
+      <Skeleton variant="text" width={200} height={32} className="mb-4" />
+      <Skeleton variant="text" width="70%" height={24} className="mb-2" />
+      <Skeleton variant="text" width="50%" height={24} />
+    </Box>
+  );
+};
+
+/**
+ * Skeleton for public notice section
+ */
+export const PublicNoticeSkeleton = () => {
+  return (
+    <Box className="max-w-3xl mx-auto">
+      <Skeleton variant="text" width={180} height={32} className="mb-4" />
+      <Skeleton
+        variant="rectangular"
+        width="100%"
+        height={80}
+        className="rounded-lg"
+      />
+    </Box>
+  );
+};
+
+/**
+ * Skeleton for a location card
+ */
+export const LocationCardSkeleton = () => {
+  return (
+    <Card className="p-4 my-2">
+      <Skeleton variant="text" width={150} height={28} className="mb-2" />
+      <Skeleton variant="text" width="90%" height={24} className="mb-1" />
+      <Skeleton variant="text" width="60%" height={24} className="mb-1" />
+      <Skeleton variant="text" width="40%" height={24} className="mb-1" />
+      <Skeleton variant="text" width="30%" height={24} className="mb-1" />
+      <Skeleton variant="text" width="80%" height={24} className="mb-1" />
+      <Skeleton variant="text" width="80%" height={24} className="mb-3" />
+      <Skeleton
+        variant="rectangular"
+        width={180}
+        height={32}
+        className="rounded-full"
+      />
+    </Card>
+  );
+};
+
+/**
+ * Skeleton for locations section
+ */
+export const LocationsSkeleton = () => {
+  return (
+    <Box className="max-w-3xl mx-auto">
+      <Skeleton variant="text" width={250} height={32} className="mb-4" />
+      <LocationCardSkeleton />
+      <LocationCardSkeleton />
+    </Box>
+  );
+};
+
+/**
+ * Skeleton for accordion sections
+ */
+export const AccordionSkeleton = () => {
+  return (
+    <Box className="max-w-3xl mx-auto">
+      <Skeleton
+        variant="rectangular"
+        width="100%"
+        height={56}
+        className="mb-3 rounded-lg"
+      />
+      <Skeleton
+        variant="rectangular"
+        width="100%"
+        height={56}
+        className="mb-3 rounded-lg"
+      />
+      <Skeleton
+        variant="rectangular"
+        width="100%"
+        height={56}
+        className="mb-3 rounded-lg"
+      />
+    </Box>
+  );
+};
+
+/**
+ * Skeleton for NPI number card
+ */
+export const NPICardSkeleton = () => {
+  return (
+    <Skeleton
+      variant="rectangular"
+      width="100%"
+      height={60}
+      className="my-2 rounded-lg"
+    />
+  );
+};
+
+/**
+ * Complete skeleton for provider profile page
+ */
+export const ProfilePageSkeleton = () => {
+  return (
+    <Box className="max-w-3xl mx-auto gap-6 mt-12 mb-8 flex flex-col">
+      <ProfileHeaderSkeleton />
+      <HealthPlanNetworkSkeleton />
+      <ContactInfoSkeleton />
+      <PublicNoticeSkeleton />
+      <LocationsSkeleton />
+      <AccordionSkeleton />
+      <NPICardSkeleton />
+    </Box>
+  );
+};
 
 /**
  * Skeleton component for the Filter UI
