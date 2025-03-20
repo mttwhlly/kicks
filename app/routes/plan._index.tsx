@@ -1,16 +1,10 @@
-import React, { Suspense } from 'react';
-import {
-  Box,
-  Checkbox,
-  Tab,
-  Tabs,
-  ToggleButton,
-  ToggleButtonGroup,
-} from '@mui/material';
+import React, { Suspense, useState } from 'react';
+import { Box, Tab, Tabs, ToggleButton, ToggleButtonGroup } from '@mui/material';
 import Filter from '~/components/Filter/Filter';
 import { Outlet } from 'react-router';
 import InteractiveMapWithCards from '~/components/InteractiveMapWithCards/InteractiveMapWithCards';
 import DynamicVirtualizedTable from '~/components/DynamicVirtualizedTable/DynamicVirtualizedTable';
+import type { FilterCriteria } from '~/components/Filter/Filter';
 
 // Sample location data
 const locationData = [
@@ -116,10 +110,12 @@ function a11yProps(index: number) {
 }
 
 export default function Index() {
-  const [type, setType] = React.useState('practitioner');
-  const [view, setView] = React.useState('list');
-
-  const [tabValue, setTabValue] = React.useState(0);
+  const [type, setType] = useState('practitioner');
+  const [tabValue, setTabValue] = useState(0);
+  const [filterCriteria, setFilterCriteria] = useState<
+    FilterCriteria | undefined
+  >();
+  const [filteredData, setFilteredData] = useState(locationData);
 
   const handleTabChange = (
     event: React.SyntheticEvent,
@@ -133,6 +129,54 @@ export default function Index() {
     newAlignment: string
   ) => {
     setType(newAlignment);
+  };
+
+  const handleFilterChange = (filters: FilterCriteria) => {
+    setFilterCriteria(filters);
+
+    // Apply filters to data for table view
+    const filtered = locationData.filter((location) => {
+      // Filter by provider name
+      if (
+        filters.name &&
+        !location.name.toLowerCase().includes(filters.name.toLowerCase())
+      ) {
+        return false;
+      }
+
+      // Filter by city
+      if (
+        filters.city &&
+        !location.address.toLowerCase().includes(filters.city.toLowerCase())
+      ) {
+        return false;
+      }
+
+      // Filter by state
+      if (filters.state && !location.address.includes(filters.state)) {
+        return false;
+      }
+
+      // Filter by specialty
+      if (
+        filters.specialty &&
+        location.specialty.toLowerCase() !== filters.specialty.toLowerCase()
+      ) {
+        return false;
+      }
+
+      // Filter by status (active/inactive)
+      if (
+        !filters.includeInactive &&
+        location.status.toLowerCase() === 'inactive'
+      ) {
+        return false;
+      }
+
+      return true;
+    });
+
+    setFilteredData(filtered);
   };
 
   const data = {
@@ -185,13 +229,16 @@ export default function Index() {
               </Box>
             </Box>
             <CustomTabPanel value={tabValue} index={0}>
-              <Filter />
-              <InteractiveMapWithCards />
+              <Filter onFilterChange={handleFilterChange} />
+              <InteractiveMapWithCards
+                filterCriteria={filterCriteria}
+                initialData={locationData}
+              />
             </CustomTabPanel>
             <CustomTabPanel value={tabValue} index={1}>
-              <Filter />
+              <Filter onFilterChange={handleFilterChange} />
               <DynamicVirtualizedTable
-                data={locationData}
+                data={filteredData}
                 excludeKeys={['id', 'description', 'position']}
               />
             </CustomTabPanel>

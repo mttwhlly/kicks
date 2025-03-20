@@ -1,8 +1,27 @@
-import { useState, useEffect, Suspense, lazy } from 'react';
+import { useState, useEffect, Suspense, lazy, useMemo } from 'react';
 import { Chip } from '@mui/material';
+import type { FilterCriteria } from '../Filter/Filter';
+
+// Type for location data
+interface LocationData {
+  id: number;
+  name: string;
+  description: string;
+  address: string;
+  position: [number, number];
+  specialty: string;
+  locations: string;
+  status: string;
+}
+
+// Props for the component
+interface InteractiveMapWithCardsProps {
+  filterCriteria?: FilterCriteria;
+  initialData?: LocationData[];
+}
 
 // Sample location data
-const locationData = [
+const defaultLocationData: LocationData[] = [
   {
     id: 1,
     name: 'Dr. Alice Auburn',
@@ -78,9 +97,13 @@ const locationData = [
 // Lazy load the map component to ensure it only loads on the client
 const MapComponent = lazy(() => import('./MapComponent'));
 
-const InteractiveMapWithCards = () => {
+const InteractiveMapWithCards = ({
+  filterCriteria,
+  initialData = defaultLocationData,
+}: InteractiveMapWithCardsProps) => {
   const [selectedLocation, setSelectedLocation] = useState(0);
   const [isBrowser, setIsBrowser] = useState(false);
+  const [locationData, setLocationData] = useState<LocationData[]>(initialData);
 
   // Check if we're in the browser environment
   useEffect(() => {
@@ -92,48 +115,108 @@ const InteractiveMapWithCards = () => {
     setSelectedLocation(locationId);
   };
 
+  // Filter data based on criteria
+  const filteredData = useMemo(() => {
+    if (!filterCriteria) return locationData;
+
+    return locationData.filter((location) => {
+      // Filter by provider name
+      if (
+        filterCriteria.name &&
+        !location.name.toLowerCase().includes(filterCriteria.name.toLowerCase())
+      ) {
+        return false;
+      }
+
+      // Filter by city
+      if (
+        filterCriteria.city &&
+        !location.address
+          .toLowerCase()
+          .includes(filterCriteria.city.toLowerCase())
+      ) {
+        return false;
+      }
+
+      // Filter by state
+      if (
+        filterCriteria.state &&
+        !location.address.includes(filterCriteria.state)
+      ) {
+        return false;
+      }
+
+      // Filter by specialty
+      if (
+        filterCriteria.specialty &&
+        location.specialty.toLowerCase() !==
+          filterCriteria.specialty.toLowerCase()
+      ) {
+        return false;
+      }
+
+      // Filter by status (active/inactive)
+      if (
+        !filterCriteria.includeInactive &&
+        location.status.toLowerCase() === 'inactive'
+      ) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [filterCriteria, locationData]);
+
   return (
     <div className="flex flex-col md:flex-row max-w-6xl mx-auto max-h-svh h-[40rem] bg-gray-100">
       {/* Card Stack Section */}
       <div className="w-full md:w-1/3 h-1/2 md:h-full overflow-y-auto p-4 bg-white border border-neutral-200">
-        <div className="space-y-4">
-          {locationData.map((location) => (
-            <div
-              key={location.id}
-              id={`card-${location.id}`}
-              className={`p-4 rounded-lg shadow-md cursor-pointer transition-all duration-100 ${
-                selectedLocation === location.id
-                  ? 'outline-blue-400 outline bg-blue-50'
-                  : 'hover:bg-gray-50'
-              }`}
-              onClick={() => handleCardClick(location.id)}
-            >
-              <div className="flex justify-between mb-2">
-                <h3 className="text-lg font-semibold">{location.name}</h3>
-                <Chip
-                  label={location.status}
-                  variant={
-                    location.status.toLowerCase() === 'inactive'
-                      ? 'outlined'
-                      : 'filled'
-                  }
-                  color={
-                    location.status.toLowerCase() === 'inactive'
-                      ? 'default'
-                      : 'primary'
-                  }
-                  size="small"
-                />
+        {filteredData.length === 0 ? (
+          <div className="p-4 text-center text-gray-500">
+            No providers match your current filters
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {filteredData.map((location) => (
+              <div
+                key={location.id}
+                id={`card-${location.id}`}
+                className={`p-4 rounded-lg shadow-md cursor-pointer transition-all duration-100 ${
+                  selectedLocation === location.id
+                    ? 'outline-blue-400 outline bg-blue-50'
+                    : 'hover:bg-gray-50'
+                }`}
+                onClick={() => handleCardClick(location.id)}
+              >
+                <div className="flex justify-between mb-2">
+                  <h3 className="text-lg font-semibold">{location.name}</h3>
+                  <Chip
+                    label={location.status}
+                    variant={
+                      location.status.toLowerCase() === 'inactive'
+                        ? 'outlined'
+                        : 'filled'
+                    }
+                    color={
+                      location.status.toLowerCase() === 'inactive'
+                        ? 'default'
+                        : 'primary'
+                    }
+                    size="small"
+                  />
+                </div>
+                <p className="text-gray-600 text-sm">{location.address}</p>
+                <p className="mt-2">{location.description}</p>
+                <p className="text-sm text-gray-500 mt-2">
+                  {location.specialty}
+                </p>
+                <p className="text-sm text-gray-500 mt-2">
+                  {location.locations} Locations
+                </p>
               </div>
-              <p className="text-gray-600 text-sm">{location.address}</p>
-              <p className="mt-2">{location.description}</p>
-              <p className="text-sm text-gray-500 mt-2">{location.specialty}</p>
-              <p className="text-sm text-gray-500 mt-2">
-                {location.locations} Locations
-              </p>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
       {/* Map Section */}
       <div className="w-full md:w-2/3 h-1/2 md:h-full">
@@ -146,7 +229,7 @@ const InteractiveMapWithCards = () => {
             }
           >
             <MapComponent
-              locations={locationData}
+              locations={filteredData}
               selectedLocation={selectedLocation}
               setSelectedLocation={setSelectedLocation}
             />
