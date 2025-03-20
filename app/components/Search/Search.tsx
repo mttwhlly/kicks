@@ -40,7 +40,7 @@ const fetchProviders = async (searchParams: Record<string, string>) => {
 const fetchNameSuggestions = async (query: string) => {
   if (!query || query.length < 2) return [];
 
-  const url = `https://occ8ko8kw44kckgk8sw8wk84.mttwhlly.cc/providers?firstName=${encodeURIComponent(
+  const url = `http://localhost:5041/api/search/practitionerorspecialty?searchString=${encodeURIComponent(
     query
   )}`;
 
@@ -65,7 +65,7 @@ const fetchNameSuggestions = async (query: string) => {
 const fetchOrgSuggestions = async (query: string) => {
   if (!query || query.length < 2) return [];
 
-  const url = `https://occ8ko8kw44kckgk8sw8wk84.mttwhlly.cc/organizations?name=${encodeURIComponent(
+  const url = `http://localhost:5041/api/search/po?searchString=${encodeURIComponent(
     query
   )}`;
 
@@ -88,7 +88,7 @@ const fetchOrgSuggestions = async (query: string) => {
 
 // Function to fetch states from API
 const fetchStates = async () => {
-  const url = `https://occ8ko8kw44kckgk8sw8wk84.mttwhlly.cc/states`;
+  const url = 'http://localhost:5041/api/search/states';
 
   const response = await fetch(url, {
     method: 'GET',
@@ -108,7 +108,7 @@ const fetchStates = async () => {
 };
 
 export default function Search() {
-  // Navigation hook (can use the appropriate router for your app)
+  // Navigation hook
   const navigate = (url) => {
     window.location.href = url;
   };
@@ -156,7 +156,7 @@ export default function Search() {
     onSubmit: ({ value }) => {
       // If organization is selected, navigate to organization-specific URL
       if (selectedOrg?.guid) {
-        navigate(`/organization/${selectedOrg.guid}`);
+        navigate(`/organization/${selectedOrg.guid}/map`);
         return;
       }
 
@@ -209,11 +209,10 @@ export default function Search() {
   useEffect(() => {
     if (orgSuggestions) {
       // Extract organization data from the response
-      // Assuming the response contains an array of organization objects with 'name' and 'guid' properties
       const organizations = Array.isArray(orgSuggestions)
         ? orgSuggestions.map((org) => ({
             name: org.name || '',
-            guid: org.guid || org.id || '', // Adapt based on your API response
+            guid: org.participatingOrganizationId || '', 
           }))
         : [];
 
@@ -238,8 +237,8 @@ export default function Search() {
       // Assuming the response is an array of state objects with 'code' and 'name' properties
       const formattedStates = Array.isArray(statesData)
         ? statesData.map((state) => ({
-            id: state.code || state.abbreviation || '',
-            label: state.name || '',
+            id: state.stateCode || '',
+            label: state.stateName || '',
           }))
         : [];
 
