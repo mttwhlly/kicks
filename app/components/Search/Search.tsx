@@ -1,4 +1,5 @@
-import React, { Suspense, useState, useEffect } from 'react';
+import { Suspense, useState, useEffect } from 'react';
+import { Link } from 'react-router';
 import { Autocomplete, Box, IconButton, TextField } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import { z } from 'zod';
@@ -117,14 +118,28 @@ export default function Search() {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [error, setError] = useState<Error | null>(null);
 
+  // Debugging state to track values
+  const [debugValues, setDebugValues] = useState({
+    nameGuid: '',
+    stateGuid: '',
+    orgGuid: '',
+  });
+
   // Setup React Query mutation for search
   const searchMutation = useMutation({
     mutationFn: async (searchData: Record<string, string>) => {
-      const specialtyOrPractitioner = searchData.nameGuid || '';
-      const stateGuid = searchData.stateGuid || '';
-      const participatingOrganization = searchData.orgGuid || '';
+      const specialtyOrPractitioner = searchData.nameGuid || null;
+      const stateGuid = searchData.stateGuid || null;
+      const participatingOrganization = searchData.orgGuid || null;
+
+      console.log('Search data:', {
+        specialtyOrPractitioner,
+        stateGuid,
+        participatingOrganization,
+      });
+
       const response = await fetch(
-        `http://localhost:5041/api/search?specialtyOrPractitioner${specialtyOrPractitioner}&stateGuid=${stateGuid}&participatingOrganization=${participatingOrganization}`,
+        `http://localhost:5041/api/search/po?specialtyOrPractitioner=${specialtyOrPractitioner}&state=${stateGuid}&participantingOrganization=${participatingOrganization}`,
         {
           method: 'POST',
           headers: {
@@ -160,13 +175,13 @@ export default function Search() {
   // Initialize form
   const form = useAppForm({
     defaultValues: {
-      firstName: '',
+      nameOrSpecialty: '',
       state: '',
       participatingorganization: '',
     },
     validators: {
       onChange: z.object({
-        firstName: z.string(),
+        nameOrSpecialty: z.string(),
         state: z.string(),
         participatingorganization: z.string(),
       }),
@@ -180,16 +195,16 @@ export default function Search() {
         const queryParams = new URLSearchParams();
 
         if (selectedName?.guid) {
-          queryParams.append('nameGuid', selectedName.guid);
+          queryParams.append('name', selectedName.guid);
         }
 
         if (stateValue?.guid) {
-          queryParams.append('stateGuid', stateValue.guid);
+          queryParams.append('state', stateValue.guid);
         }
 
         // Construct URL with dynamic route and query parameters
         const queryString = queryParams.toString();
-        const route = `/organization/${selectedOrg.guid}${
+        const route = `/organization/${selectedOrg.guid}/map${
           queryString ? `?${queryString}` : ''
         }`;
 
@@ -200,15 +215,24 @@ export default function Search() {
       // CASE 2: If participating organization is not selected, send a POST request
       const requestData: Record<string, string> = {};
 
-      // Add nameGuid if available
+      // Add nameGuid if available - using selectedName.guid directly
       if (selectedName?.guid) {
         requestData.nameGuid = selectedName.guid;
+        console.log('Using nameGuid:', selectedName.guid);
       }
 
       // Add stateGuid if available
       if (stateValue?.guid) {
         requestData.stateGuid = stateValue.guid;
+        console.log('Using stateGuid:', stateValue.guid);
       }
+
+      // Update debug values
+      setDebugValues({
+        nameGuid: selectedName?.guid || '',
+        stateGuid: stateValue?.guid || '',
+        orgGuid: selectedOrg?.guid || '',
+      });
 
       // Only proceed if we have at least one guid to search with
       if (Object.keys(requestData).length === 0) {
@@ -250,11 +274,12 @@ export default function Search() {
           }))
         : [];
 
-      // Filter out items with empty names
+      // Filter out items with empty names or guids
       const validProviders = providers.filter(
-        (provider) => provider.name.trim() !== ''
+        (provider) => provider.name.trim() !== '' && provider.guid
       );
 
+      console.log('Valid name/specialty providers:', validProviders);
       setNameOptions(validProviders);
     }
   }, [nameSuggestions]);
@@ -266,13 +291,16 @@ export default function Search() {
       const organizations = Array.isArray(orgSuggestions)
         ? orgSuggestions.map((org) => ({
             name: org.name || '',
-            guid: org.participatingOrganizationId || '',
+            guid: org.id || '',
           }))
         : [];
 
-      // Filter out items with empty names
-      const validOrgs = organizations.filter((org) => org.name.trim() !== '');
+      // Filter out items with empty names or guids
+      const validOrgs = organizations.filter(
+        (org) => org.name.trim() !== '' && org.guid
+      );
 
+      console.log('Valid organizations:', validOrgs);
       setOrgOptions(validOrgs);
     }
   }, [orgSuggestions]);
@@ -296,6 +324,7 @@ export default function Search() {
           }))
         : [];
 
+      console.log('Formatted states:', formattedStates);
       setStates(formattedStates);
     }
   }, [statesData]);
@@ -314,7 +343,7 @@ export default function Search() {
             <Box className="flex">
               {/* Name or Specialty Field with Autocomplete */}
               <form.AppField
-                name="firstName"
+                name="nameOrSpecialty"
                 children={(field) => {
                   return (
                     <Box className="flex flex-1">
@@ -330,14 +359,21 @@ export default function Search() {
                         onChange={(event, newValue) => {
                           if (typeof newValue === 'string') {
                             // Handle free text input
+                            // Don't set a guid for free text input
                             setSelectedName({
                               name: newValue,
                               guid: '',
                             });
-                          } else {
-                            // Handle selection from dropdown
+                          } else if (newValue) {
+                            // Handle selection from dropdown with proper guid
+                            console.log('Selected name option:', newValue);
                             setSelectedName(newValue);
+                          } else {
+                            // Handle clearing the selection
+                            setSelectedName(null);
                           }
+
+                          // Update the form field with just the name
                           field.handleChange(
                             typeof newValue === 'string'
                               ? newValue
@@ -399,6 +435,7 @@ export default function Search() {
                         disablePortal
                         value={stateValue}
                         onChange={(event, newValue) => {
+                          console.log('Selected state:', newValue);
                           setStateValue(newValue);
                           field.handleChange(newValue?.id || '');
                         }}
@@ -476,10 +513,15 @@ export default function Search() {
                               name: newValue,
                               guid: '',
                             });
-                          } else {
+                          } else if (newValue) {
                             // Handle selection from dropdown
+                            console.log('Selected org option:', newValue);
                             setSelectedOrg(newValue);
+                          } else {
+                            // Handle clearing the selection
+                            setSelectedOrg(null);
                           }
+
                           field.handleChange(
                             typeof newValue === 'string'
                               ? newValue
@@ -555,21 +597,49 @@ export default function Search() {
             </p>
           )}
 
-          {/* Display search results */}
+          {/* Debugging info - remove in production */}
+          {process.env.NODE_ENV !== 'production' && (
+            <div className="mt-4 p-2 bg-gray-100 text-xs font-mono">
+              <p>Debug - Selected values:</p>
+              <ul>
+                <li>
+                  Name: {selectedName?.name} (GUID:{' '}
+                  {selectedName?.guid || 'none'})
+                </li>
+                <li>
+                  State: {stateValue?.label} (GUID: {stateValue?.guid || 'none'}
+                  )
+                </li>
+                <li>
+                  Organization: {selectedOrg?.name} (GUID:{' '}
+                  {selectedOrg?.guid || 'none'})
+                </li>
+              </ul>
+            </div>
+          )}
+        </Box>
+
+        {/* Display search results */}
+        <Box className="mt-2 mb-8 py-8 max-w-6xl mx-auto p-8 bg-white">
           {searchResults.length > 0 && (
-            <div className="mt-4">
-              <h2 className="text-xl font-bold">Search Results</h2>
-              <div className="mt-2 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="mt-8 border rounded-lg p-8">
+              <h2 className="text-xl font-bold">Results</h2>
+              <div className="mt-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {searchResults.map((result, index) => (
-                  <div key={index} className="p-4 bg-white rounded shadow">
-                    <h3 className="font-semibold">{result.name}</h3>
-                    {result.specialty && <p>Specialty: {result.specialty}</p>}
-                    {result.organization && (
-                      <p>Organization: {result.organization}</p>
-                    )}
-                    {result.address && <p>Address: {result.address}</p>}
-                    {result.phone && <p>Phone: {result.phone}</p>}
-                  </div>
+                  <Link
+                    key={result.id || index}
+                    to={`/organization/${result.id}/map`}
+                  >
+                    <div className="p-4 bg-neutral-100 rounded text-center hover:bg-neutral-200 transition-colors">
+                      <h3 className="font-semibold">{result.name}</h3>
+                      {result.specialty && <p>Specialty: {result.specialty}</p>}
+                      {result.organization && (
+                        <p>Organization: {result.organization}</p>
+                      )}
+                      {result.address && <p>Address: {result.address}</p>}
+                      {result.phone && <p>Phone: {result.phone}</p>}
+                    </div>
+                  </Link>
                 ))}
               </div>
             </div>
