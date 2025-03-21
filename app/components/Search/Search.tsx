@@ -1,4 +1,5 @@
-import React, { Suspense, useState, useEffect } from 'react';
+import { Suspense, useState, useEffect } from 'react';
+import { Link } from 'react-router';
 import { Autocomplete, Box, IconButton, TextField } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import { z } from 'zod';
@@ -120,11 +121,11 @@ export default function Search() {
   // Setup React Query mutation for search
   const searchMutation = useMutation({
     mutationFn: async (searchData: Record<string, string>) => {
-      const specialtyOrPractitioner = searchData.nameGuid || '';
-      const stateGuid = searchData.stateGuid || '';
-      const participatingOrganization = searchData.orgGuid || '';
+      const specialtyOrPractitioner = searchData.nameGuid || null;
+      const stateGuid = searchData.stateGuid || null;
+      const participatingOrganization = searchData.orgGuid || null;
       const response = await fetch(
-        `http://localhost:5041/api/search?specialtyOrPractitioner${specialtyOrPractitioner}&stateGuid=${stateGuid}&participatingOrganization=${participatingOrganization}`,
+        `http://localhost:5041/api/search/po?specialtyOrPractitioner=${specialtyOrPractitioner}&state=${stateGuid}&participantingOrganization=${participatingOrganization}`,
         {
           method: 'POST',
           headers: {
@@ -160,13 +161,13 @@ export default function Search() {
   // Initialize form
   const form = useAppForm({
     defaultValues: {
-      firstName: '',
+      nameOrSpecialty: '',
       state: '',
       participatingorganization: '',
     },
     validators: {
       onChange: z.object({
-        firstName: z.string(),
+        nameOrSpecialty: z.string(),
         state: z.string(),
         participatingorganization: z.string(),
       }),
@@ -266,13 +267,12 @@ export default function Search() {
       const organizations = Array.isArray(orgSuggestions)
         ? orgSuggestions.map((org) => ({
             name: org.name || '',
-            guid: org.participatingOrganizationId || '',
+            guid: org.id || '',
           }))
         : [];
 
       // Filter out items with empty names
       const validOrgs = organizations.filter((org) => org.name.trim() !== '');
-
       setOrgOptions(validOrgs);
     }
   }, [orgSuggestions]);
@@ -314,7 +314,7 @@ export default function Search() {
             <Box className="flex">
               {/* Name or Specialty Field with Autocomplete */}
               <form.AppField
-                name="firstName"
+                name="nameOrSpecialty"
                 children={(field) => {
                   return (
                     <Box className="flex flex-1">
@@ -555,13 +555,16 @@ export default function Search() {
             </p>
           )}
 
+          </Box>
           {/* Display search results */}
+          <Box className="mt-2 mb-8 py-8 max-w-6xl mx-auto p-8 bg-white">
           {searchResults.length > 0 && (
-            <div className="mt-4">
-              <h2 className="text-xl font-bold">Search Results</h2>
-              <div className="mt-2 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="mt-8 border rounded-lg p-8">
+              <h2 className="text-xl font-bold">Results</h2>
+              <div className="mt-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {searchResults.map((result, index) => (
-                  <div key={index} className="p-4 bg-white rounded shadow">
+                  <Link to={`/organization/${result.id}/map`}>
+                  <div key={index} className="p-4 bg-neutral-100 rounded text-center">
                     <h3 className="font-semibold">{result.name}</h3>
                     {result.specialty && <p>Specialty: {result.specialty}</p>}
                     {result.organization && (
@@ -570,11 +573,12 @@ export default function Search() {
                     {result.address && <p>Address: {result.address}</p>}
                     {result.phone && <p>Phone: {result.phone}</p>}
                   </div>
+                  </Link>
                 ))}
               </div>
             </div>
           )}
-        </Box>
+          </Box>
       </Suspense>
     </>
   );
