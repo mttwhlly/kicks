@@ -4,6 +4,10 @@ import { Box } from '@mui/material';
 import Filter from '~/components/Filter/Filter';
 import DynamicVirtualizedTable from '~/components/DynamicVirtualizedTable/DynamicVirtualizedTable';
 import type { FilterCriteria } from '~/components/Filter/Filter';
+import {
+  FilterSkeleton,
+  TableSkeleton,
+} from '~/components/Skeletons/Skeletons';
 
 interface LocationData {
   id: number;
@@ -27,89 +31,98 @@ export default function PlanList() {
 
   // Fetch provider data based on plan ID
   useEffect(() => {
+    let isMounted = true;
     // Simulating an API call to fetch providers for the specific plan
     // In a real app, you would make an actual API request here
     setIsLoading(true);
 
-    // Simulated API fetch with setTimeout
-    setTimeout(() => {
-      // Sample data - in a real app this would come from an API
-      const mockData: LocationData[] = [
-        {
-          id: 1,
-          name: 'Dr. Alice Auburn',
-          description: '',
-          address: '501 Stanyan St, San Francisco, CA 94117',
-          position: [37.7694, -122.4862],
-          specialty: 'Orthopedic Surgery',
-          locations: '2',
-          status: 'Active',
-        },
-        {
-          id: 2,
-          name: 'Dr. Bob Blue',
-          description: '',
-          address: '123 Main St, San Francisco, CA 94105',
-          position: [37.7749, -122.4194],
-          specialty: 'Cardiology',
-          locations: '3',
-          status: 'Active',
-        },
-        {
-          id: 3,
-          name: 'Dr. Carol Crimson',
-          description: '',
-          address: '456 Elm St, San Francisco, CA 94107',
-          position: [37.7849, -122.4094],
-          specialty: 'Neurology',
-          locations: '1',
-          status: 'Inactive',
-        },
-        {
-          id: 4,
-          name: 'Dr. David Emerald',
-          description: '',
-          address: '789 Oak St, San Francisco, CA 94108',
-          position: [37.7949, -122.3994],
-          specialty: 'Pediatrics',
-          locations: '4',
-          status: 'Active',
-        },
-        {
-          id: 5,
-          name: 'Dr. Eva Emerald',
-          description: '',
-          address: '321 Maple St, San Francisco, CA 94109',
-          position: [37.7649, -122.4094],
-          specialty: 'Dermatology',
-          locations: '2',
-          status: 'Active',
-        },
-        {
-          id: 6,
-          name: 'Dr. Frank Fuchsia',
-          description: '',
-          address: '654 Pine St, San Francisco, CA 94110',
-          position: [37.7749, -122.3994],
-          specialty: 'Gynecology',
-          locations: '3',
-          status: 'Inactive',
-        },
-        {
-          id: 7,
-          name: 'Dr. Grace Green',
-          description: '',
-          address: '321 Birch St, San Francisco, CA 94111',
-          position: [37.7849, -122.3894],
-          specialty: 'Psychiatry',
-          locations: '1',
-          status: 'Active',
-        },
-      ];
+    // Sample data - in a real app this would come from an API
+    const mockData: LocationData[] = [
+      {
+        id: 1,
+        name: 'Dr. Alice Auburn',
+        description: '',
+        address: '501 Stanyan St, San Francisco, CA 94117',
+        position: [37.7694, -122.4862],
+        specialty: 'Orthopedic Surgery',
+        locations: '2',
+        status: 'Active',
+      },
+      {
+        id: 2,
+        name: 'Dr. Bob Blue',
+        description: '',
+        address: '123 Main St, San Francisco, CA 94105',
+        position: [37.7749, -122.4194],
+        specialty: 'Cardiology',
+        locations: '3',
+        status: 'Active',
+      },
+      {
+        id: 3,
+        name: 'Dr. Carol Crimson',
+        description: '',
+        address: '456 Elm St, San Francisco, CA 94107',
+        position: [37.7849, -122.4094],
+        specialty: 'Neurology',
+        locations: '1',
+        status: 'Inactive',
+      },
+      {
+        id: 4,
+        name: 'Dr. David Emerald',
+        description: '',
+        address: '789 Oak St, San Francisco, CA 94108',
+        position: [37.7949, -122.3994],
+        specialty: 'Pediatrics',
+        locations: '4',
+        status: 'Active',
+      },
+      {
+        id: 5,
+        name: 'Dr. Eva Emerald',
+        description: '',
+        address: '321 Maple St, San Francisco, CA 94109',
+        position: [37.7649, -122.4094],
+        specialty: 'Dermatology',
+        locations: '2',
+        status: 'Active',
+      },
+      {
+        id: 6,
+        name: 'Dr. Frank Fuchsia',
+        description: '',
+        address: '654 Pine St, San Francisco, CA 94110',
+        position: [37.7749, -122.3994],
+        specialty: 'Gynecology',
+        locations: '3',
+        status: 'Inactive',
+      },
+      {
+        id: 7,
+        name: 'Dr. Grace Green',
+        description: '',
+        address: '321 Birch St, San Francisco, CA 94111',
+        position: [37.7849, -122.3894],
+        specialty: 'Psychiatry',
+        locations: '1',
+        status: 'Active',
+      },
+    ];
 
-      setLocationData(mockData);
-      setIsLoading(false);
-    }, 800); // Simulate network delay
+    // Simulated API fetch with setTimeout
+    const timer = setTimeout(() => {
+      if (isMounted) {
+        setLocationData(mockData);
+        setIsLoading(false);
+      }
+    }, 1500); // Simulate network delay
+
+    // Cleanup function to prevent state updates if component unmounts
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+    };
   }, [planId]);
 
   // Apply filters to the data
@@ -175,16 +188,16 @@ export default function PlanList() {
 
   return (
     <Box sx={{ p: 3 }}>
-      {/* Filter Component */}
-      <Filter onFilterChange={handleFilterChange} />
-
-      {/* Loading State */}
+      {/* Filter Component - Show skeleton while loading */}
       {isLoading ? (
-        <Box className="flex items-center justify-center h-96 bg-gray-100">
-          <p className="text-xl text-gray-500">
-            Loading providers for plan {planId}...
-          </p>
-        </Box>
+        <FilterSkeleton />
+      ) : (
+        <Filter onFilterChange={handleFilterChange} />
+      )}
+
+      {/* Table Component - Show skeleton while loading */}
+      {isLoading ? (
+        <TableSkeleton />
       ) : (
         <Box className="mt-4">
           {/* Display result count */}
