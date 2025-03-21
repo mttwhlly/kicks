@@ -180,16 +180,16 @@ export default function Search() {
         const queryParams = new URLSearchParams();
 
         if (selectedName?.guid) {
-          queryParams.append('nameGuid', selectedName.guid);
+          queryParams.append('name', selectedName.guid);
         }
 
         if (stateValue?.guid) {
-          queryParams.append('stateGuid', stateValue.guid);
+          queryParams.append('state', stateValue.guid);
         }
 
         // Construct URL with dynamic route and query parameters
         const queryString = queryParams.toString();
-        const route = `/organization/${selectedOrg.guid}${
+        const route = `/organization/${selectedOrg.guid}/map${
           queryString ? `?${queryString}` : ''
         }`;
 
