@@ -1,4 +1,4 @@
-import React, { Suspense, useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Autocomplete,
   Box,
@@ -105,7 +105,9 @@ export default function Filter({ onFilterChange }: FilterProps) {
       includeInactive: debouncedIncludeInactive,
     };
 
-    onFilterChange(filters);
+
+      onFilterChange(filters);
+
   }, [
     debouncedName,
     debouncedCity,
@@ -118,8 +120,8 @@ export default function Filter({ onFilterChange }: FilterProps) {
   ]);
 
   return (
-    <Suspense fallback={<p>Loading...</p>}>
-      <div className="max-w-7xl mx-auto p-4 pt-0 mb-4 sticky top-0 z-[1001] bg-white border border-gray-200 rounded-lg shadow-sm">
+
+      <div className="max-w-7xl mx-auto p-4 pt-0 sticky top-0 z-[1001] bg-white border-neutral-300 border-b border-x-0 rounded-none">
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -168,7 +170,7 @@ export default function Filter({ onFilterChange }: FilterProps) {
                 return (
                   <Box className="flex flex-1 min-w-[200px]">
                     <TextField
-                      label="Provider Name"
+                      label="Practitioner Name"
                       placeholder='e.g. "John Doe"'
                       variant="outlined"
                       size="small"
@@ -402,6 +404,6 @@ export default function Filter({ onFilterChange }: FilterProps) {
           </Box>
         </form>
       </div>
-    </Suspense>
+
   );
 }
