@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { Link } from 'react-router';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
@@ -14,6 +15,7 @@ interface ColumnData {
   label: string;
   numeric?: boolean;
   width?: number;
+  renderCell?: (value: any, row: any) => React.ReactNode;
 }
 
 interface VirtualizedTableProps<T extends object> {
@@ -68,6 +70,7 @@ function deriveColumns<T extends object>(
       label: config.label || key.charAt(0).toUpperCase() + key.slice(1),
       numeric: config.numeric !== undefined ? config.numeric : isNumeric,
       width: config.width || defaultColumnWidth,
+      renderCell: config.renderCell,
     };
   });
 }
@@ -122,7 +125,9 @@ function DynamicVirtualizedTable<T extends object>({
                 key={column.dataKey}
                 align={column.numeric || false ? 'right' : 'left'}
               >
-                {cellValue !== undefined ? String(cellValue) : ''}
+                {column.renderCell ? (
+                  column.renderCell(cellValue, row)
+                ) : cellValue !== undefined ? String(cellValue) : ''}
               </TableCell>
             );
           })}
