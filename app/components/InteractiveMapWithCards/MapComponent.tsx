@@ -54,13 +54,15 @@ interface MapComponentProps {
 // Create a custom FlyTo component
 const FlyToHandler = ({ map, selectedLocation, locations }) => {
   useEffect(() => {
-    if (!map || selectedLocation === null || selectedLocation === 0 || !locations || locations.length === 0){
+    if (!map || selectedLocation === null || !locations || locations.length === 0) {
       return; 
     }
+    
     try {
-    const selected = locations.find((loc) => loc.id === selectedLocation);
-    if (!isNaN(selected.latitude) && !isNaN(selected.longitude)) {
-
+      // Since selectedLocation is the index, directly access the location
+      const selected = locations[selectedLocation];
+      
+      if (selected && !isNaN(selected.latitude) && !isNaN(selected.longitude)) {
         map.flyTo([selected.latitude, selected.longitude], 15, {
           duration: 1.5,
         });
