@@ -14,8 +14,9 @@ interface ColumnData {
   dataKey: string;
   label: string;
   numeric?: boolean;
-  width?: number;
+  width?: number | 'auto'; // Allow 'auto' for content-based width
   renderCell?: (value: any, row: any) => React.ReactNode;
+  order?: number; // Add order property for column ordering
 }
 
 interface VirtualizedTableProps<T extends object> {
@@ -24,7 +25,8 @@ interface VirtualizedTableProps<T extends object> {
   width?: number | string;
   excludeKeys?: string[];
   columnConfig?: Record<string, Partial<ColumnData>>;
-  defaultColumnWidth?: number;
+  defaultColumnWidth?: number | 'auto'; // Allow 'auto' as default
+  columnOrder?: string[]; // Add explicit column order option
 }
 
 const VirtuosoTableComponents: TableComponents<any> = {
@@ -34,7 +36,7 @@ const VirtuosoTableComponents: TableComponents<any> = {
   Table: (props) => (
     <Table
       {...props}
-      sx={{ borderCollapse: 'separate', tableLayout: 'fixed' }}
+      sx={{ borderCollapse: 'separate', tableLayout: 'auto' }} // Change from 'fixed' to 'auto' for content-based sizing
     />
   ),
   TableHead: React.forwardRef<HTMLTableSectionElement>((props, ref) => (
@@ -51,7 +53,8 @@ function deriveColumns<T extends object>(
   data: T[],
   excludeKeys: string[],
   columnConfig: Record<string, Partial<ColumnData>>,
-  defaultColumnWidth: number
+  defaultColumnWidth: number | 'auto',
+  columnOrder?: string[]
 ): ColumnData[] {
   if (!data || data.length === 0) return [];
 
@@ -60,7 +63,8 @@ function deriveColumns<T extends object>(
     (key) => !excludeKeys.includes(key)
   );
 
-  return keys.map((key) => {
+  // Create columns with all properties
+  const columns = keys.map((key) => {
     const config = columnConfig[key] || {};
     const value = firstItem[key as keyof typeof firstItem];
     const isNumeric = typeof value === 'number';
@@ -71,8 +75,26 @@ function deriveColumns<T extends object>(
       numeric: config.numeric !== undefined ? config.numeric : isNumeric,
       width: config.width || defaultColumnWidth,
       renderCell: config.renderCell,
+      // Set order from config or use a high number as default (to place at the end)
+      order: config.order !== undefined ? config.order : 1000,
     };
   });
+
+  // Apply explicit column order if provided
+  if (columnOrder && columnOrder.length > 0) {
+    // Create a map for O(1) lookup of order by key
+    const orderMap = new Map(columnOrder.map((key, index) => [key, index]));
+    
+    // Apply explicit order for keys that are in the columnOrder array
+    columns.forEach(column => {
+      if (orderMap.has(column.dataKey)) {
+        column.order = orderMap.get(column.dataKey);
+      }
+    });
+  }
+
+  // Sort columns by order
+  return columns.sort((a, b) => (a.order || 1000) - (b.order || 1000));
 }
 
 function DynamicVirtualizedTable<T extends object>({
@@ -81,17 +103,19 @@ function DynamicVirtualizedTable<T extends object>({
   width = '100%',
   excludeKeys = [],
   columnConfig = {},
-  defaultColumnWidth = 100,
+  defaultColumnWidth = 'auto', // Change default to 'auto'
+  columnOrder,
 }: VirtualizedTableProps<T>) {
   // Derive columns only once during initial render or when inputs change
   const columns = React.useMemo(
-    () => deriveColumns(data, excludeKeys, columnConfig, defaultColumnWidth),
+    () => deriveColumns(data, excludeKeys, columnConfig, defaultColumnWidth, columnOrder),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       data.length > 0 ? data[0] : null, // Only depend on the first item's structure
       excludeKeys.join(','), // Convert arrays to strings for comparison
       JSON.stringify(columnConfig), // Convert objects to strings for comparison
       defaultColumnWidth,
+      columnOrder?.join(','), // Add columnOrder to dependencies
     ]
   );
 
@@ -103,7 +127,10 @@ function DynamicVirtualizedTable<T extends object>({
             key={column.dataKey}
             variant="head"
             align={column.numeric || false ? 'right' : 'left'}
-            style={{ width: column.width }}
+            style={{ 
+              width: column.width === 'auto' ? undefined : column.width,
+              whiteSpace: 'nowrap', // Prevent header text from wrapping
+            }}
             sx={{ backgroundColor: 'background.paper' }}
             className="font-bold uppercase"
           >
@@ -124,6 +151,9 @@ function DynamicVirtualizedTable<T extends object>({
               <TableCell
                 key={column.dataKey}
                 align={column.numeric || false ? 'right' : 'left'}
+                style={{ 
+                  width: column.width === 'auto' ? undefined : column.width,
+                }}
               >
                 {column.renderCell ? (
                   column.renderCell(cellValue, row)
