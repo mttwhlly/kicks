@@ -8,18 +8,6 @@ import { formatZip } from '~/utils/formatters';
 // Import this here because this component only runs client-side
 import L from 'leaflet';
 
-// Type definition for location data
-interface LocationData {
-  id: number;
-  name: string;
-  description: string;
-  address: string;
-  position: [number, number];
-  specialty: string;
-  locations: string;
-  status: string;
-}
-
 interface TestLocationData {
   acceptNewPatients: 100000000 | 100000001 | null;
   addressLine1: string;
@@ -51,7 +39,7 @@ interface MapComponentProps {
   setSelectedLocation: (id: number) => void;
 }
 
-// Create a custom FlyTo component
+// Updated FlyToHandler component
 const FlyToHandler = ({ map, selectedLocation, locations }) => {
   useEffect(() => {
     if (!map || selectedLocation === null || !locations || locations.length === 0) {
@@ -63,9 +51,24 @@ const FlyToHandler = ({ map, selectedLocation, locations }) => {
       const selected = locations[selectedLocation];
       
       if (selected && !isNaN(selected.latitude) && !isNaN(selected.longitude)) {
-        map.flyTo([selected.latitude, selected.longitude], 15, {
+        // Open the popup after flying to the location
+        const markerPosition = [selected.latitude, selected.longitude];
+        
+        map.flyTo(markerPosition, 15, {
           duration: 1.5,
         });
+        
+        // Find the marker at this position and open its popup after the flyTo animation completes
+        setTimeout(() => {
+          map.eachLayer((layer) => {
+            if (layer instanceof L.Marker) {
+              const latLng = layer.getLatLng();
+              if (latLng.lat === markerPosition[0] && latLng.lng === markerPosition[1]) {
+                layer.openPopup();
+              }
+            }
+          });
+        }, 1600); // Set timeout slightly longer than flyTo duration
       }
     } catch (error) {
       console.error("Error in FlyToHandler:", error);
@@ -172,10 +175,6 @@ const MapComponent = ({
                   {location.addressLine1 && <p className="my-0">{location.addressLine1}</p>}
                   {location.addressLine2 && <p className="my-0">{location.addressLine2}</p>}
                   {(location.city && location.state && location.zip) && <p className="my-0">{location.city + ', ' + location.state + ' ' + formatZip(location.zip)}</p>}
-                  {/* <p className="text-sm text-gray-600 my-0">
-                    {location.specialty}
-                  </p> */}
-                  {/* <p className="text-sm text-gray-600 my-0">{location.status}</p> */}
                   <Link to={`/profile/${location.practitionerId}`} viewTransition>View Profile</Link>
                 </div>
               </Popup>
@@ -186,7 +185,7 @@ const MapComponent = ({
           {locations.length > 1 && <FitBoundsToMarkers locations={locations} />}
 
           {/* Handle flying to selected location */}
-          {map && selectedLocation !== 0 && (
+          {map && (
             <FlyToHandler
               map={map}
               selectedLocation={selectedLocation}
