@@ -1,6 +1,6 @@
 import { Suspense, useState, useEffect } from 'react';
 import { Link } from 'react-router';
-import { Autocomplete, Box, IconButton, TextField } from '@mui/material';
+import { Autocomplete, Box, Chip, IconButton, TextField } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import { z } from 'zod';
 import type { USStateType } from '~/types/usStates';
@@ -88,7 +88,7 @@ export default function Search() {
   // State for Name Autocomplete
   const [nameInputValue, setNameInputValue] = useState('');
   const [nameOptions, setNameOptions] = useState<
-    Array<{ name: string; guid: string }>
+    Array<{ name: string; guid: string; type: string }>
   >([]);
   const [selectedName, setSelectedName] = useState<{
     name: string;
@@ -98,7 +98,7 @@ export default function Search() {
   // State for Organization Autocomplete
   const [orgInputValue, setOrgInputValue] = useState('');
   const [orgOptions, setOrgOptions] = useState<
-    Array<{ name: string; guid: string }>
+    Array<{ name: string; guid: string; type: string }>
   >([]);
   const [selectedOrg, setSelectedOrg] = useState<{
     name: string;
@@ -131,12 +131,6 @@ export default function Search() {
       const specialtyOrPractitioner = searchData.nameGuid || null;
       const stateGuid = searchData.stateGuid || null;
       const participatingOrganization = searchData.orgGuid || null;
-
-      console.log('Search data:', {
-        specialtyOrPractitioner,
-        stateGuid,
-        participatingOrganization,
-      });
 
       const response = await fetch(
         `http://localhost:5041/api/search/po?specialtyOrPractitioner=${specialtyOrPractitioner}&state=${stateGuid}&participantingOrganization=${participatingOrganization}`,
@@ -218,13 +212,11 @@ export default function Search() {
       // Add nameGuid if available - using selectedName.guid directly
       if (selectedName?.guid) {
         requestData.nameGuid = selectedName.guid;
-        console.log('Using nameGuid:', selectedName.guid);
       }
 
       // Add stateGuid if available
       if (stateValue?.guid) {
         requestData.stateGuid = stateValue.guid;
-        console.log('Using stateGuid:', stateValue.guid);
       }
 
       // Update debug values
@@ -270,7 +262,8 @@ export default function Search() {
       const providers = Array.isArray(nameSuggestions)
         ? nameSuggestions.map((provider) => ({
             name: provider.name || '',
-            guid: provider.guid || provider.practitionerId || '',
+            guid: provider.id || '',
+            type: provider.type || ''
           }))
         : [];
 
@@ -279,7 +272,6 @@ export default function Search() {
         (provider) => provider.name.trim() !== '' && provider.guid
       );
 
-      console.log('Valid name/specialty providers:', validProviders);
       setNameOptions(validProviders);
     }
   }, [nameSuggestions]);
@@ -291,7 +283,7 @@ export default function Search() {
       const organizations = Array.isArray(orgSuggestions)
         ? orgSuggestions.map((org) => ({
             name: org.name || '',
-            guid: org.id || '',
+            guid: org.participatingOrganizationId || '',
           }))
         : [];
 
@@ -300,7 +292,6 @@ export default function Search() {
         (org) => org.name.trim() !== '' && org.guid
       );
 
-      console.log('Valid organizations:', validOrgs);
       setOrgOptions(validOrgs);
     }
   }, [orgSuggestions]);
@@ -324,7 +315,6 @@ export default function Search() {
           }))
         : [];
 
-      console.log('Formatted states:', formattedStates);
       setStates(formattedStates);
     }
   }, [statesData]);
@@ -348,7 +338,6 @@ export default function Search() {
                   return (
                     <Box className="flex flex-1">
                       <Autocomplete
-                        freeSolo
                         options={nameOptions}
                         inputValue={nameInputValue}
                         onInputChange={(event, newInputValue) => {
@@ -366,7 +355,6 @@ export default function Search() {
                             });
                           } else if (newValue) {
                             // Handle selection from dropdown with proper guid
-                            console.log('Selected name option:', newValue);
                             setSelectedName(newValue);
                           } else {
                             // Handle clearing the selection
@@ -380,7 +368,7 @@ export default function Search() {
                               : newValue?.name || ''
                           );
                         }}
-                        getOptionLabel={(option) => {
+                        getOptionLabel={(option: {name: string; guid: string; type: string;}) => {
                           // Handle both string and object options
                           if (typeof option === 'string') {
                             return option;
@@ -395,6 +383,14 @@ export default function Search() {
                         loadingText="Loading providers..."
                         noOptionsText="No providers found"
                         className="flex-1"
+                        renderOption={(props, option) => (
+                          <li {...props} key={option.guid}>
+                            <Box className='flex justify-between w-full'>
+                              <Box>{option.name}</Box>
+                              <Chip variant='outlined' size="small" label={option.type.toLowerCase() === 'practitioner' ? 'Practitioner' : 'Specialty'} className='text-neutral-500'/>
+                            </Box>
+                          </li>
+                        )}
                         renderInput={(params) => (
                           <TextField
                             {...params}
@@ -435,7 +431,6 @@ export default function Search() {
                         disablePortal
                         value={stateValue}
                         onChange={(event, newValue) => {
-                          console.log('Selected state:', newValue);
                           setStateValue(newValue);
                           field.handleChange(newValue?.id || '');
                         }}
@@ -515,7 +510,6 @@ export default function Search() {
                             });
                           } else if (newValue) {
                             // Handle selection from dropdown
-                            console.log('Selected org option:', newValue);
                             setSelectedOrg(newValue);
                           } else {
                             // Handle clearing the selection
@@ -576,7 +570,7 @@ export default function Search() {
               <IconButton
                 type="submit"
                 disabled={searchMutation.isPending}
-                className="rounded-l-none rounded-r-md p-4 bg-neutral-400 text-white text-xl"
+                className="rounded-l-none rounded-r-md p-4 bg-neutral-400 text-white text-xl hover:bg-neutral-800"
               >
                 <SearchIcon />
               </IconButton>
@@ -596,27 +590,6 @@ export default function Search() {
                   : 'Unknown error occurred')}
             </p>
           )}
-
-          {/* Debugging info - remove in production */}
-          {process.env.NODE_ENV !== 'production' && (
-            <div className="mt-4 p-2 bg-gray-100 text-xs font-mono">
-              <p>Debug - Selected values:</p>
-              <ul>
-                <li>
-                  Name: {selectedName?.name} (GUID:{' '}
-                  {selectedName?.guid || 'none'})
-                </li>
-                <li>
-                  State: {stateValue?.label} (GUID: {stateValue?.guid || 'none'}
-                  )
-                </li>
-                <li>
-                  Organization: {selectedOrg?.name} (GUID:{' '}
-                  {selectedOrg?.guid || 'none'})
-                </li>
-              </ul>
-            </div>
-          )}
         </Box>
 
         {/* Display search results */}
@@ -629,6 +602,7 @@ export default function Search() {
                   <Link
                     key={result.id || index}
                     to={`/organization/${result.id}/map`}
+                    viewTransition
                   >
                     <div className="p-4 bg-neutral-100 rounded text-center hover:bg-neutral-200 transition-colors">
                       <h3 className="font-semibold">{result.name}</h3>
