@@ -2,6 +2,7 @@ import { useState, useEffect, Suspense, lazy, useMemo } from 'react';
 import { Link } from 'react-router';
 import { Chip } from '@mui/material';
 import type { FilterCriteria } from '../Filter/Filter';
+import { formatZip } from '~/utils/formatters'
 
 // Type for location data
 interface LocationData {
@@ -15,110 +16,137 @@ interface LocationData {
   status: string;
 }
 
+interface TestLocationData {
+  acceptNewPatients: 100000000 | 100000001 | null;
+  addressLine1: string;
+  addressLine2?: string;
+  city: string;
+  firstName: string;
+  fullName: string;
+  lastName: string;
+  latitude: number;
+  locationCount: number;
+  longitude: number;
+  officeFaxNumber: string;
+  officePhoneExtension: string;
+  officePhoneNumber: string;
+  officeType: string;
+  participatingOrganizationId: string;
+  practiceLocationId: string;
+  practiceLocationName: string;
+  practitionerId: string;
+  providerCount: number;
+  rosterId: string;
+  state: string;
+  zip: string;
+}
+
 // Props for the component
 interface InteractiveMapWithCardsProps {
   filterCriteria?: FilterCriteria;
   initialData?: LocationData[];
 }
 
-const profile = {
-  id: '889A9D5F-4690-ED11-A896-000D3A8A723F'
-}
+// const profile = {
+//   id: '889A9D5F-4690-ED11-A896-000D3A8A723F'
+// }
 
 // Sample location data
-const defaultLocationData: LocationData[] = [
-  {
-    id: 1,
-    name: 'Michael P White NP',
-    description: '',
-    address: '123 Cool Kid Street, San Francisco, CA 94117',
-    position: [37.7684, -122.4362],
-    specialty: 'Registered Nurse, Medical-Surgical',
-    locations: '5',
-    status: 'Active',
-  },
-  {
-    id: 2,
-    name: 'Dr. Alice Auburn',
-    description: '',
-    address: '501 Stanyan St, San Francisco, CA 94117',
-    position: [37.7694, -122.4862],
-    specialty: 'Orthopedic Surgery',
-    locations: '2',
-    status: 'Active',
-  },
-  {
-    id: 3,
-    name: 'Dr. Bob Blue',
-    description: '',
-    address: '123 Main St, San Francisco, CA 94105',
-    position: [37.7749, -122.4194],
-    specialty: 'Cardiology',
-    locations: '3',
-    status: 'Active',
-  },
-  {
-    id: 4,
-    name: 'Dr. Carol Crimson',
-    description: '',
-    address: '456 Elm St, San Francisco, CA 94107',
-    position: [37.7849, -122.4094],
-    specialty: 'Neurology',
-    locations: '1',
-    status: 'Inactive',
-  },
-  {
-    id: 5,
-    name: 'Dr. David Emerald',
-    description: '',
-    address: '789 Oak St, San Francisco, CA 94108',
-    position: [37.7949, -122.3994],
-    specialty: 'Pediatrics',
-    locations: '4',
-    status: 'Active',
-  },
-  {
-    id: 6,
-    name: 'Dr. Eva Emerald',
-    description: '',
-    address: '321 Maple St, San Francisco, CA 94109',
-    position: [37.7649, -122.4094],
-    specialty: 'Dermatology',
-    locations: '2',
-    status: 'Active',
-  },
-  {
-    id: 7,
-    name: 'Dr. Frank Fuchsia',
-    description: '',
-    address: '654 Pine St, San Francisco, CA 94110',
-    position: [37.7749, -122.3994],
-    specialty: 'Gynecology',
-    locations: '3',
-    status: 'Inactive',
-  },
-  {
-    id: 8,
-    name: 'Dr. Grace Green',
-    description: '',
-    address: '321 Birch St, San Francisco, CA 94111',
-    position: [37.7849, -122.3894],
-    specialty: 'Psychiatry',
-    locations: '1',
-    status: 'Active',
-  },
-];
+// const defaultLocationData: LocationData[] = [
+//   {
+//     id: 1,
+//     name: 'Michael P White NP',
+//     description: '',
+//     address: '123 Cool Kid Street, San Francisco, CA 94117',
+//     position: [37.7684, -122.4362],
+//     specialty: 'Registered Nurse, Medical-Surgical',
+//     locations: '5',
+//     status: 'Active',
+//   },
+//   {
+//     id: 2,
+//     name: 'Dr. Alice Auburn',
+//     description: '',
+//     address: '501 Stanyan St, San Francisco, CA 94117',
+//     position: [37.7694, -122.4862],
+//     specialty: 'Orthopedic Surgery',
+//     locations: '2',
+//     status: 'Active',
+//   },
+//   {
+//     id: 3,
+//     name: 'Dr. Bob Blue',
+//     description: '',
+//     address: '123 Main St, San Francisco, CA 94105',
+//     position: [37.7749, -122.4194],
+//     specialty: 'Cardiology',
+//     locations: '3',
+//     status: 'Active',
+//   },
+//   {
+//     id: 4,
+//     name: 'Dr. Carol Crimson',
+//     description: '',
+//     address: '456 Elm St, San Francisco, CA 94107',
+//     position: [37.7849, -122.4094],
+//     specialty: 'Neurology',
+//     locations: '1',
+//     status: 'Inactive',
+//   },
+//   {
+//     id: 5,
+//     name: 'Dr. David Emerald',
+//     description: '',
+//     address: '789 Oak St, San Francisco, CA 94108',
+//     position: [37.7949, -122.3994],
+//     specialty: 'Pediatrics',
+//     locations: '4',
+//     status: 'Active',
+//   },
+//   {
+//     id: 6,
+//     name: 'Dr. Eva Emerald',
+//     description: '',
+//     address: '321 Maple St, San Francisco, CA 94109',
+//     position: [37.7649, -122.4094],
+//     specialty: 'Dermatology',
+//     locations: '2',
+//     status: 'Active',
+//   },
+//   {
+//     id: 7,
+//     name: 'Dr. Frank Fuchsia',
+//     description: '',
+//     address: '654 Pine St, San Francisco, CA 94110',
+//     position: [37.7749, -122.3994],
+//     specialty: 'Gynecology',
+//     locations: '3',
+//     status: 'Inactive',
+//   },
+//   {
+//     id: 8,
+//     name: 'Dr. Grace Green',
+//     description: '',
+//     address: '321 Birch St, San Francisco, CA 94111',
+//     position: [37.7849, -122.3894],
+//     specialty: 'Psychiatry',
+//     locations: '1',
+//     status: 'Active',
+//   },
+// ];
+
+
 
 // Lazy load the map component to ensure it only loads on the client
 const MapComponent = lazy(() => import('./MapComponent'));
 
 const InteractiveMapWithCards = ({
   filterCriteria,
-  initialData = defaultLocationData,
+  initialData,
 }: InteractiveMapWithCardsProps) => {
   const [selectedLocation, setSelectedLocation] = useState(0);
   const [isBrowser, setIsBrowser] = useState(false);
-  const [locationData, setLocationData] = useState<LocationData[]>(initialData);
+  const [locationData, setLocationData] = useState<TestLocationData[]>(initialData);
 
   // Check if we're in the browser environment
   useEffect(() => {
@@ -139,16 +167,16 @@ const InteractiveMapWithCards = ({
     return locationData.filter((location) => {
       // Filter by provider name
       if (
-        filterCriteria.name && filterCriteria.name.trim() !== '' &&
-        !location.name.toLowerCase().includes(filterCriteria.name.toLowerCase())
+        location.fullName && filterCriteria.name && filterCriteria.name.trim() !== '' &&
+        !location.fullName.toLowerCase().includes(filterCriteria.name.toLowerCase())
       ) {
         return false;
       }
 
       // Filter by city
       if (
-        filterCriteria.city && filterCriteria.city.trim() !== '' && 
-        !location.address
+        location.city && filterCriteria.city && filterCriteria.city.trim() !== '' && 
+        !location.city
           .toLowerCase()
           .includes(filterCriteria.city.toLowerCase())
       ) {
@@ -157,57 +185,73 @@ const InteractiveMapWithCards = ({
 
       // Filter by state
       if (
-        filterCriteria.state &&
-        !location.address.includes(filterCriteria.state)
+        location.state && filterCriteria.state &&
+        !location.state.includes(filterCriteria.state)
       ) {
         return false;
       }
+
+      // Filter by accepting new patients
+      if (
+        location.acceptNewPatients === 100000001 && !filterCriteria.acceptingNewPatients
+      ) {
+        return false;
+      }
+
+      // TODO: pull in specialties & status
 
       // Filter by specialty
-      if (
-        filterCriteria.specialty &&
-        location.specialty.toLowerCase() !==
-          filterCriteria.specialty.toLowerCase()
-      ) {
-        return false;
-      }
+      // if (
+      //   filterCriteria.specialty &&
+      //   location.specialty.toLowerCase() !==
+      //     filterCriteria.specialty.toLowerCase()
+      // ) {
+      //   return false;
+      // }
 
       // Filter by status (active/inactive)
-      if (
-        !filterCriteria.includeInactive &&
-        location.status.toLowerCase() === 'inactive'
-      ) {
-        return false;
-      }
+      // if (
+      //   !filterCriteria.includeInactive &&
+      //   location.status.toLowerCase() === 'inactive'
+      // ) {
+      //   return false;
+      // }
 
       return true;
     });
   }, [filterCriteria, locationData]);
 
   return (
+    <>
     <div className="flex flex-col md:flex-row max-w-6xl mx-auto max-h-svh h-[40rem] bg-gray-100">
       {/* Card Stack Section */}
       <div className="w-full md:w-1/3 h-1/2 md:h-full overflow-y-auto p-4 bg-white border border-neutral-200">
+    <div className="mb-4">
+      <p className="font-medium text-gray-700">
+        Showing {filteredData.length} of {locationData.length} practitioners
+      </p>
+    </div>
         {filteredData.length === 0 ? (
           <div className="p-4 text-center text-gray-500">
             No providers match your current filters
           </div>
         ) : (
           <div className="space-y-4">
-            {filteredData.map((location) => (
+            {filteredData.map((location, index) => (
               <div
-                key={location.id}
-                id={`card-${location.id}`}
+                key={index}
+                id={`card-${index}`}
                 className={`p-4 rounded-lg shadow-md cursor-pointer transition-all duration-100 ${
-                  selectedLocation === location.id
+                  selectedLocation === index
                     ? 'outline-blue-400 outline bg-blue-50'
                     : 'hover:bg-gray-50'
                 }`}
-                onClick={() => handleCardClick(location.id)}
+                onClick={() => handleCardClick(index)}
               >
                 <div className="flex justify-between mb-2">
-                  <Link to={`/profile/${profile.id}`} viewTransition><h3 className="text-md font-semibold hover:underline">{location.name}</h3></Link>
-                  <Chip
+                  <Link to={`/profile/${location.practitionerId}`} viewTransition><h3 className="text-md font-semibold hover:underline">{location.practiceLocationName}</h3></Link>
+       {/* TODO: update with status data */}
+                  {/* <Chip
                     label={location.status}
                     variant="outlined"
                     color={
@@ -216,15 +260,16 @@ const InteractiveMapWithCards = ({
                         : 'primary'
                     }
                     size="small"
-                  />
+                  /> */}
                 </div>
-                <p className="text-gray-600 text-xs">{location.address}</p>
-                <p className="mt-2">{location.description}</p>
-                <p className="text-xs text-gray-500 mt-2">
+                {location.addressLine1 && <p className="my-0">{location.addressLine1}</p>}
+                {location.addressLine2 && <p className="my-0">{location?.addressLine2}</p>}
+                {(location.city && location.state && location.zip) && <p className="my-0">{location.city + ', ' + location.state + ' ' + formatZip(location.zip)}</p>}
+                {/* <p className="text-xs text-gray-500 mt-2">
                   {location.specialty}
-                </p>
+                </p> */}
                 <p className="text-xs text-gray-500 mt-2">
-                  {location.locations} Locations
+                  {location.locationCount} Locations
                 </p>
                 
               </div>
@@ -246,7 +291,6 @@ const InteractiveMapWithCards = ({
               locations={filteredData}
               selectedLocation={selectedLocation}
               setSelectedLocation={setSelectedLocation}
-              profileId={profile.id}
             />
           </Suspense>
         ) : (
@@ -256,6 +300,7 @@ const InteractiveMapWithCards = ({
         )}
       </div>
     </div>
+    </>
   );
 };
 
