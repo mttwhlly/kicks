@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useParams } from 'react-router';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { Link, useParams } from 'react-router';
 import { Box } from '@mui/material';
 import Filter from '~/components/Filter/Filter';
 import DynamicVirtualizedTable from '~/components/DynamicVirtualizedTable/DynamicVirtualizedTable';
@@ -10,7 +10,7 @@ import {
 } from '~/components/Skeletons/Skeletons';
 
 interface LocationData {
-  id: number;
+  id: string;
   name: string;
   description: string;
   address: string;
@@ -20,7 +20,7 @@ interface LocationData {
   status: string;
 }
 
-export default function PlanList() {
+export default function List() {
   const params = useParams();
   const planId = params.id;
   const [filterCriteria, setFilterCriteria] = useState<
@@ -39,17 +39,17 @@ export default function PlanList() {
     // Sample data - in a real app this would come from an API
     const mockData: LocationData[] = [
       {
-        id: 1,
-        name: 'Dr. Alice Auburn',
-        description: '',
-        address: '501 Stanyan St, San Francisco, CA 94117',
-        position: [37.7694, -122.4862],
-        specialty: 'Orthopedic Surgery',
-        locations: '2',
+        id: '889A9D5F-4690-ED11-A896-000D3A8A723F',
+        name: 'Dr. Alice Auburn', // practitioner but need ID
+        description: '', // not a thing
+        address: '501 Stanyan St, San Francisco, CA 94117', // location but need ID
+        position: [37.7694, -122.4862], // location but need ID
+        specialty: 'Orthopedic Surgery', // specialty
+        locations: '2', 
         status: 'Active',
       },
       {
-        id: 2,
+        id: '889A9D5F-4690-ED11-A896-000D3A8A723F',
         name: 'Dr. Bob Blue',
         description: '',
         address: '123 Main St, San Francisco, CA 94105',
@@ -59,7 +59,7 @@ export default function PlanList() {
         status: 'Active',
       },
       {
-        id: 3,
+        id: '889A9D5F-4690-ED11-A896-000D3A8A723F',
         name: 'Dr. Carol Crimson',
         description: '',
         address: '456 Elm St, San Francisco, CA 94107',
@@ -69,7 +69,7 @@ export default function PlanList() {
         status: 'Inactive',
       },
       {
-        id: 4,
+        id: '889A9D5F-4690-ED11-A896-000D3A8A723F',
         name: 'Dr. David Emerald',
         description: '',
         address: '789 Oak St, San Francisco, CA 94108',
@@ -79,7 +79,7 @@ export default function PlanList() {
         status: 'Active',
       },
       {
-        id: 5,
+        id: '889A9D5F-4690-ED11-A896-000D3A8A723F',
         name: 'Dr. Eva Emerald',
         description: '',
         address: '321 Maple St, San Francisco, CA 94109',
@@ -89,7 +89,7 @@ export default function PlanList() {
         status: 'Active',
       },
       {
-        id: 6,
+        id: '889A9D5F-4690-ED11-A896-000D3A8A723F',
         name: 'Dr. Frank Fuchsia',
         description: '',
         address: '654 Pine St, San Francisco, CA 94110',
@@ -99,7 +99,7 @@ export default function PlanList() {
         status: 'Inactive',
       },
       {
-        id: 7,
+        id: '889A9D5F-4690-ED11-A896-000D3A8A723F',
         name: 'Dr. Grace Green',
         description: '',
         address: '321 Birch St, San Francisco, CA 94111',
@@ -116,7 +116,7 @@ export default function PlanList() {
         setLocationData(mockData);
         setIsLoading(false);
       }
-    }, 1500); // Simulate network delay
+    }, 0); // Simulate network delay if you want to
 
     // Cleanup function to prevent state updates if component unmounts
     return () => {
@@ -187,7 +187,7 @@ export default function PlanList() {
   }, []);
 
   return (
-    <Box sx={{ p: 3 }}>
+    <Box className="mt-4">
       {/* Filter Component - Show skeleton while loading */}
       {isLoading ? (
         <FilterSkeleton />
@@ -211,6 +211,13 @@ export default function PlanList() {
           <DynamicVirtualizedTable
             data={filteredData}
             excludeKeys={['id', 'description', 'position']}
+            columnConfig={{
+              name: {
+                renderCell: (value, row) => (
+                  <Link to={`/profile/${row.id}`} className="hover:underline" viewTransition>{value}</Link>
+                )
+              }
+            }}
           />
         </Box>
       )}
