@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { Link } from 'react-router';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import MarkerIcon from './Icon';
@@ -22,18 +23,27 @@ interface MapComponentProps {
   locations: LocationData[];
   selectedLocation: number;
   setSelectedLocation: (id: number) => void;
+  profileId: string;
 }
 
 // Create a custom FlyTo component
 const FlyToHandler = ({ map, selectedLocation, locations }) => {
   useEffect(() => {
-    if (selectedLocation !== null && selectedLocation !== 0) {
-      const selected = locations.find((loc) => loc.id === selectedLocation);
-      if (selected && map) {
+    if (!map || selectedLocation === null || selectedLocation === 0 || !locations || locations.length === 0){
+      return; 
+    }
+    try {
+    const selected = locations.find((loc) => loc.id === selectedLocation);
+    if (selected && Array.isArray(selected.position) && 
+        selected.position.length === 2 &&
+        !isNaN(selected.position[0]) && !isNaN(selected.position[1])) {
+
         map.flyTo(selected.position, 15, {
           duration: 1.5,
         });
       }
+    } catch (error) {
+      console.error("Error in FlyToHandler:", error);
     }
   }, [selectedLocation, map, locations]);
 
@@ -46,13 +56,24 @@ const FitBoundsToMarkers = ({ locations }) => {
 
   useEffect(() => {
     if (locations.length > 0) {
-      // Create bounds from marker positions
-      const bounds = L.latLngBounds(locations.map((loc) => loc.position));
+      try {
+        const validPositions = locations.filter(loc =>
+          Array.isArray(loc.position) && loc.position.length === 2 &&
+          !isNaN(loc.position[0]) && !isNaN(loc.position[1])
+        );
 
-      // Add some padding to the bounds
-      map.fitBounds(bounds, { padding: [50, 50] });
+        if(validPositions.length > 0) {
+          const bounds = L.latLngBounds(validPositions.map(loc => loc.position));
+
+          if (bounds.isValid()) {
+            map.fitBounds(bounds, { padding: [50, 50] });
+          }
+        }
+      } catch (error) {
+        console.error("Error fitting bounds:", error);
+      }
     }
-  }, [locations, map]);
+  }, [locations]);
 
   return null;
 };
@@ -61,6 +82,7 @@ const MapComponent = ({
   locations,
   selectedLocation,
   setSelectedLocation,
+  profileId
 }: MapComponentProps) => {
   const [map, setMap] = useState(null);
   const markersRef = useRef({});
@@ -86,19 +108,12 @@ const MapComponent = ({
     }
   };
 
-  // Save marker references for highlight effect
-  useEffect(() => {
-    if (selectedLocation !== null && markersRef.current[selectedLocation]) {
-      // You could add highlight effect to the marker here if needed
-    }
-  }, [selectedLocation]);
-
   return (
     <MapContainer
       center={defaultCenter}
       zoom={12}
       style={{ height: '100%', width: '100%' }}
-      whenCreated={setMap}
+      ref={setMap}
     >
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -129,12 +144,13 @@ const MapComponent = ({
             >
               <Popup>
                 <div>
-                  <h3 className="font-bold">{location.name}</h3>
-                  <p>{location.address}</p>
-                  <p className="text-sm text-gray-600 mt-1">
+                  <h3 className="font-bold mb-1">{location.name}</h3>
+                  <p className="my-0">{location.address}</p>
+                  <p className="text-sm text-gray-600 my-0">
                     {location.specialty}
                   </p>
-                  <p className="text-sm text-gray-600">{location.status}</p>
+                  <p className="text-sm text-gray-600 my-0">{location.status}</p>
+                  <Link to={`/profile/${profileId}`} viewTransition>View Profile</Link>
                 </div>
               </Popup>
             </Marker>
