@@ -14,9 +14,8 @@ interface ColumnData {
   dataKey: string;
   label: string;
   numeric?: boolean;
-  width?: number | 'auto'; // Allow 'auto' for content-based width
+  width?: number | 'auto';
   renderCell?: (value: any, row: any) => React.ReactNode;
-  order?: number; // Add order property for column ordering
 }
 
 interface VirtualizedTableProps<T extends object> {
@@ -25,8 +24,8 @@ interface VirtualizedTableProps<T extends object> {
   width?: number | string;
   excludeKeys?: string[];
   columnConfig?: Record<string, Partial<ColumnData>>;
-  defaultColumnWidth?: number | 'auto'; // Allow 'auto' as default
-  columnOrder?: string[]; // Add explicit column order option
+  defaultColumnWidth?: number | 'auto';
+  columnOrder?: string[]; // Column ordering array
 }
 
 const VirtuosoTableComponents: TableComponents<any> = {
@@ -36,7 +35,7 @@ const VirtuosoTableComponents: TableComponents<any> = {
   Table: (props) => (
     <Table
       {...props}
-      sx={{ borderCollapse: 'separate', tableLayout: 'auto' }} // Change from 'fixed' to 'auto' for content-based sizing
+      sx={{ borderCollapse: 'separate', tableLayout: 'auto' }}
     />
   ),
   TableHead: React.forwardRef<HTMLTableSectionElement>((props, ref) => (
@@ -48,8 +47,8 @@ const VirtuosoTableComponents: TableComponents<any> = {
   )),
 };
 
-// Helper function to derive columns from data
-function deriveColumns<T extends object>(
+// Completely rewritten column generation function that prioritizes columnOrder
+function generateColumns<T extends object>(
   data: T[],
   excludeKeys: string[],
   columnConfig: Record<string, Partial<ColumnData>>,
@@ -59,12 +58,44 @@ function deriveColumns<T extends object>(
   if (!data || data.length === 0) return [];
 
   const firstItem = data[0];
-  const keys = Object.keys(firstItem).filter(
+  
+  // Get all valid keys (excluding the specified ones)
+  const validKeys = Object.keys(firstItem).filter(
     (key) => !excludeKeys.includes(key)
   );
+  
+  // If we have a column order, use it to build the columns
+  if (columnOrder && columnOrder.length > 0) {
+    // First, build a Set of valid keys for O(1) lookups
+    const validKeysSet = new Set(validKeys);
+    
+    // Filter the columnOrder to only include keys that exist in the data
+    const validColumnOrder = columnOrder.filter(key => validKeysSet.has(key));
+    
+    // Find any keys in validKeys that aren't in the column order
+    const remainingKeys = validKeys.filter(key => !columnOrder.includes(key));
+    
+    // Combine the valid column order with any remaining keys
+    const orderedKeys = [...validColumnOrder, ...remainingKeys];
+    
+    // Map ordered keys to columns
+    return orderedKeys.map(key => {
+      const config = columnConfig[key] || {};
+      const value = firstItem[key as keyof typeof firstItem];
+      const isNumeric = typeof value === 'number';
 
-  // Create columns with all properties
-  const columns = keys.map((key) => {
+      return {
+        dataKey: key,
+        label: config.label || key.charAt(0).toUpperCase() + key.slice(1),
+        numeric: config.numeric !== undefined ? config.numeric : isNumeric,
+        width: config.width || defaultColumnWidth,
+        renderCell: config.renderCell
+      };
+    });
+  }
+  
+  // If no column order, just map all valid keys to columns
+  return validKeys.map(key => {
     const config = columnConfig[key] || {};
     const value = firstItem[key as keyof typeof firstItem];
     const isNumeric = typeof value === 'number';
@@ -74,40 +105,9 @@ function deriveColumns<T extends object>(
       label: config.label || key.charAt(0).toUpperCase() + key.slice(1),
       numeric: config.numeric !== undefined ? config.numeric : isNumeric,
       width: config.width || defaultColumnWidth,
-      renderCell: config.renderCell,
-      // Use a high default order
-      order: config.order !== undefined ? config.order : 1000,
+      renderCell: config.renderCell
     };
   });
-
-  // If columnOrder is provided, create a new array based on columnOrder
-  if (columnOrder && columnOrder.length > 0) {
-    // First, create a map of all columns by dataKey for easy lookup
-    const columnsMap = new Map(columns.map(col => [col.dataKey, col]));
-    
-    // Create ordered columns array based on columnOrder
-    const orderedColumns: ColumnData[] = [];
-    
-    // First add columns that are in the columnOrder array
-    columnOrder.forEach((key, index) => {
-      if (columnsMap.has(key)) {
-        const column = columnsMap.get(key)!;
-        column.order = index; // Set order based on position in columnOrder
-        orderedColumns.push(column);
-        columnsMap.delete(key); // Remove from map to avoid duplicates
-      }
-    });
-    
-    // Then add any remaining columns
-    columnsMap.forEach(column => {
-      orderedColumns.push(column);
-    });
-    
-    return orderedColumns;
-  }
-
-  // If no columnOrder, sort by the order property
-  return columns.sort((a, b) => (a.order || 1000) - (b.order || 1000));
 }
 
 function DynamicVirtualizedTable<T extends object>({
@@ -116,21 +116,27 @@ function DynamicVirtualizedTable<T extends object>({
   width = '100%',
   excludeKeys = [],
   columnConfig = {},
-  defaultColumnWidth = 'auto', // Change default to 'auto'
+  defaultColumnWidth = 'auto',
   columnOrder,
 }: VirtualizedTableProps<T>) {
-  // Derive columns only once during initial render or when inputs change
+  // Generate columns using the new approach
   const columns = React.useMemo(
-    () => deriveColumns(data, excludeKeys, columnConfig, defaultColumnWidth, columnOrder),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    () => generateColumns(data, excludeKeys, columnConfig, defaultColumnWidth, columnOrder),
     [
-      data.length > 0 ? JSON.stringify(Object.keys(data[0])) : '', // Only depend on the structure
-      excludeKeys.join(','), // Convert arrays to strings for comparison
-      JSON.stringify(columnConfig), // Convert objects to strings for comparison
+      data.length > 0 ? JSON.stringify(Object.keys(data[0])) : '',
+      excludeKeys.join(','),
+      JSON.stringify(columnConfig),
       defaultColumnWidth,
-      columnOrder?.join(','), // Add columnOrder to dependencies
+      columnOrder?.join(','),
     ]
   );
+
+  // For debugging
+  React.useEffect(() => {
+    if (columns.length > 0) {
+      console.log('Column order in table:', columns.map(c => c.dataKey));
+    }
+  }, [columns]);
 
   const fixedHeaderContent = React.useCallback(() => {
     return (
@@ -142,7 +148,7 @@ function DynamicVirtualizedTable<T extends object>({
             align={column.numeric || false ? 'right' : 'left'}
             style={{ 
               width: column.width === 'auto' ? undefined : column.width,
-              whiteSpace: 'nowrap', // Prevent header text from wrapping
+              whiteSpace: 'nowrap',
             }}
             sx={{ backgroundColor: 'background.paper' }}
             className="font-bold uppercase"
@@ -195,9 +201,6 @@ function DynamicVirtualizedTable<T extends object>({
       </Paper>
     );
   }
-
-  // Debug log to check column order
-  console.log('Columns after ordering:', columns.map(c => c.dataKey));
 
   return (
     <Paper style={{ height, width }}>
