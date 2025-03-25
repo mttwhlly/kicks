@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { Link, useParams } from 'react-router';
+import { Link, useOutletContext, useParams } from 'react-router';
 import { Box } from '@mui/material';
 import Filter from '~/components/Filter/Filter';
 import DynamicVirtualizedTable from '~/components/DynamicVirtualizedTable/DynamicVirtualizedTable';
@@ -8,6 +8,32 @@ import {
   FilterSkeleton,
   TableSkeleton,
 } from '~/components/Skeletons/Skeletons';
+import { formatPhoneNumber, formatZip } from '~/utils/formatters'
+
+interface TestLocationData {
+  acceptNewPatients: number;
+  addressLine1: string;
+  addressLine2?: string;
+  city: string;
+  firstName: string;
+  fullName: string;
+  lastName: string;
+  latitude: number;
+  locationCount: number;
+  longitude: number;
+  officeFaxNumber: string;
+  officePhoneExtension: string;
+  officePhoneNumber: string;
+  officeType: string;
+  participatingOrganizationId: string;
+  practiceLocationId: string;
+  practiceLocationName: string;
+  practitionerId: string;
+  providerCount: number;
+  rosterId: string;
+  state: string;
+  zip: string;
+}
 
 interface LocationData {
   id: string;
@@ -27,7 +53,9 @@ export default function List() {
     FilterCriteria | undefined
   >();
   const [isLoading, setIsLoading] = useState(true);
-  const [locationData, setLocationData] = useState<LocationData[]>([]);
+  const [locationData, setLocationData] = useState<TestLocationData[]>([]);
+
+const data: TestLocationData[] = useOutletContext();
 
   // Fetch provider data based on plan ID
   useEffect(() => {
@@ -36,84 +64,12 @@ export default function List() {
     // In a real app, you would make an actual API request here
     setIsLoading(true);
 
-    // Sample data - in a real app this would come from an API
-    const mockData: LocationData[] = [
-      {
-        id: '889A9D5F-4690-ED11-A896-000D3A8A723F',
-        name: 'Dr. Alice Auburn', // practitioner but need ID
-        description: '', // not a thing
-        address: '501 Stanyan St, San Francisco, CA 94117', // location but need ID
-        position: [37.7694, -122.4862], // location but need ID
-        specialty: 'Orthopedic Surgery', // specialty
-        locations: '2', 
-        status: 'Active',
-      },
-      {
-        id: '889A9D5F-4690-ED11-A896-000D3A8A723F',
-        name: 'Dr. Bob Blue',
-        description: '',
-        address: '123 Main St, San Francisco, CA 94105',
-        position: [37.7749, -122.4194],
-        specialty: 'Cardiology',
-        locations: '3',
-        status: 'Active',
-      },
-      {
-        id: '889A9D5F-4690-ED11-A896-000D3A8A723F',
-        name: 'Dr. Carol Crimson',
-        description: '',
-        address: '456 Elm St, San Francisco, CA 94107',
-        position: [37.7849, -122.4094],
-        specialty: 'Neurology',
-        locations: '1',
-        status: 'Inactive',
-      },
-      {
-        id: '889A9D5F-4690-ED11-A896-000D3A8A723F',
-        name: 'Dr. David Emerald',
-        description: '',
-        address: '789 Oak St, San Francisco, CA 94108',
-        position: [37.7949, -122.3994],
-        specialty: 'Pediatrics',
-        locations: '4',
-        status: 'Active',
-      },
-      {
-        id: '889A9D5F-4690-ED11-A896-000D3A8A723F',
-        name: 'Dr. Eva Emerald',
-        description: '',
-        address: '321 Maple St, San Francisco, CA 94109',
-        position: [37.7649, -122.4094],
-        specialty: 'Dermatology',
-        locations: '2',
-        status: 'Active',
-      },
-      {
-        id: '889A9D5F-4690-ED11-A896-000D3A8A723F',
-        name: 'Dr. Frank Fuchsia',
-        description: '',
-        address: '654 Pine St, San Francisco, CA 94110',
-        position: [37.7749, -122.3994],
-        specialty: 'Gynecology',
-        locations: '3',
-        status: 'Inactive',
-      },
-      {
-        id: '889A9D5F-4690-ED11-A896-000D3A8A723F',
-        name: 'Dr. Grace Green',
-        description: '',
-        address: '321 Birch St, San Francisco, CA 94111',
-        position: [37.7849, -122.3894],
-        specialty: 'Psychiatry',
-        locations: '1',
-        status: 'Active',
-      },
-    ];
+    const testData: TestLocationData[] = data;
 
     // Simulated API fetch with setTimeout
     const timer = setTimeout(() => {
       if (isMounted) {
-        setLocationData(mockData);
+        setLocationData(testData);
         setIsLoading(false);
       }
     }, 0); // Simulate network delay if you want to
@@ -125,57 +81,64 @@ export default function List() {
     };
   }, [planId]);
 
-  // Apply filters to the data
+  // Filter data based on criteria
   const filteredData = useMemo(() => {
-    if (!filterCriteria) return locationData;
-
+    if (!filterCriteria || !locationData || locationData.length === 0) {
+      return locationData || [];
+    }
+    
     return locationData.filter((location) => {
       // Filter by provider name
       if (
-        filterCriteria.name &&
-        filterCriteria.name.trim() !== '' &&
-        !location.name.toLowerCase().includes(filterCriteria.name.toLowerCase())
+        location.fullName && filterCriteria.name && filterCriteria.name.trim() !== '' &&
+        !location.fullName.toLowerCase().includes(filterCriteria.name.toLowerCase())
       ) {
         return false;
       }
-
+      
       // Filter by city
       if (
-        filterCriteria.city &&
-        filterCriteria.city.trim() !== '' &&
-        !location.address
-          .toLowerCase()
-          .includes(filterCriteria.city.toLowerCase())
+        location.city && filterCriteria.city && filterCriteria.city.trim() !== '' && 
+        !location.city
+        .toLowerCase()
+        .includes(filterCriteria.city.toLowerCase())
       ) {
         return false;
       }
-
+      
       // Filter by state
       if (
-        filterCriteria.state &&
-        filterCriteria.state.trim() !== '' &&
-        !location.address.includes(filterCriteria.state)
+        location.state && filterCriteria.state &&
+        !location.state.includes(filterCriteria.state)
       ) {
         return false;
       }
+      
+      // Filter by accepting new patients
+      if (
+        location.acceptNewPatients === 100000001 && !filterCriteria.acceptingNewPatients
+      ) {
+        return false;
+      }
+      
+      // TODO: pull in specialties & status
 
       // Filter by specialty
-      if (
-        filterCriteria.specialty &&
-        filterCriteria.specialty.trim() !== '' &&
-        location.specialty.toLowerCase() !==
-          filterCriteria.specialty.toLowerCase()
-      ) {
-        return false;
-      }
+      // if (
+      //   filterCriteria.specialty &&
+      //   location.specialty.toLowerCase() !==
+      //     filterCriteria.specialty.toLowerCase()
+      // ) {
+      //   return false;
+      // }
 
       // Filter by status (active/inactive)
-      if (
-        !filterCriteria.includeInactive &&
-        location.status.toLowerCase() === 'inactive'
-      ) {
-        return false;
-      }
+      // if (
+      //   !filterCriteria.includeInactive &&
+      //   location.status.toLowerCase() === 'inactive'
+      // ) {
+      //   return false;
+      // }
 
       return true;
     });
@@ -203,21 +166,68 @@ export default function List() {
           {/* Display result count */}
           <div className="mb-4">
             <p className="font-medium text-gray-700">
-              Showing {filteredData.length} of {locationData.length} providers
+              Showing {filteredData.length} of {locationData.length} practitioners
             </p>
           </div>
 
           {/* Virtualized Table Component */}
           <DynamicVirtualizedTable
             data={filteredData}
-            excludeKeys={['id', 'description', 'position']}
+            excludeKeys={[
+            "acceptNewPatients",
+            "addressLine2",
+            "city",
+            "state",
+            "zip",
+            "firstName",
+            "lastName",
+            "latitude",
+            "locationCount",
+            "longitude",
+            "officeFaxNumber",
+            "officePhoneExtension",
+            "officeType",
+            "participatingOrganizationId",
+            "practiceLocationId",
+            "practitionerId",
+            "providerCount",
+            "providerTypeId",
+            "providerType",
+            "providerTypeIdName",
+            "rosterId"]}
+
             columnConfig={{
-              name: {
+              fullName: {
+                label: 'Practitioner Name',
                 renderCell: (value, row) => (
-                  <Link to={`/profile/${row.id}`} className="hover:underline" viewTransition>{value}</Link>
+                  <Link to={`/profile/${row.practitionerId}`} className="hover:underline" viewTransition>{value}</Link>
                 )
+              },
+              addressLine1: {
+                label: 'Address',
+                width: 'auto',
+                renderCell: (value, row) => (
+                  <div><p>{`${row.addressLine1} ${row.addressLine2 ? row.addressLine2 : ''}`}</p><p>{`${row.city}, ${row.state} ${formatZip(row.zip)}`}</p>
+                  </div>
+                )
+              },
+              // acceptNewPatients: {
+              //   label: 'Accepting New Patients',
+              //   renderCell: (value) => (
+              //     <div>{value === 100000001 ? 'Yes' : 'No'}</div>
+              //   ) 
+              // },
+              practiceLocationName: {
+                label: 'Location Name'
+              },
+              officePhoneNumber: {
+                label: 'Phone Number',
+                renderCell: (value) => (
+                  <div>{formatPhoneNumber(value)}</div>
+                ) 
               }
             }}
+            columnOrder={['fullName', 'addressLine1', 'practiceLocationName', 'address']}
           />
         </Box>
       )}
