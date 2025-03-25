@@ -1,5 +1,5 @@
 import { Suspense, useState, useEffect } from 'react';
-import { Link } from 'react-router';
+import { Link, useParams } from 'react-router';
 import { Autocomplete, Box, Chip, IconButton, TextField } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import { z } from 'zod';
@@ -93,6 +93,7 @@ export default function Search() {
   const [selectedName, setSelectedName] = useState<{
     name: string;
     guid: string;
+    type: string;
   } | null>(null);
 
   // State for Organization Autocomplete
@@ -118,22 +119,32 @@ export default function Search() {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [error, setError] = useState<Error | null>(null);
 
-  // Debugging state to track values
-  const [debugValues, setDebugValues] = useState({
-    nameGuid: '',
-    stateGuid: '',
-    orgGuid: '',
-  });
-
   // Setup React Query mutation for search
   const searchMutation = useMutation({
     mutationFn: async (searchData: Record<string, string>) => {
-      const specialtyOrPractitioner = searchData.nameGuid || null;
-      const stateGuid = searchData.stateGuid || null;
-      const participatingOrganization = searchData.orgGuid || null;
+
+      // Build query parameters for other fields if they have values
+      const queryParams = new URLSearchParams();
+
+      if (searchData.specialtyGuid) {
+        queryParams.append('specialtyGuid', searchData.specialtyGuid);
+      }
+
+      if (searchData.nameGuid) {
+        queryParams.append('practitionerGuid', searchData.nameGuid);
+      }
+
+      if (searchData.stateGuid) {
+        queryParams.append('stateGuid', searchData.stateGuid);
+      }
+
+      // Construct URL with dynamic route and query parameters
+      const queryString = queryParams.toString();
 
       const response = await fetch(
-        `http://localhost:5041/api/search/po?specialtyOrPractitioner=${specialtyOrPractitioner}&state=${stateGuid}&participantingOrganization=${participatingOrganization}`,
+        `http://localhost:5041/api/search/po${
+          queryString ? `?${queryString}` : ''
+        }`,
         {
           method: 'POST',
           headers: {
@@ -198,9 +209,13 @@ export default function Search() {
 
         // Construct URL with dynamic route and query parameters
         const queryString = queryParams.toString();
+        console.log(queryString)
         const route = `/organization/${selectedOrg.guid}/map${
           queryString ? `?${queryString}` : ''
         }`;
+
+        // Check if selected org has data
+        
 
         navigate(route);
         return;
@@ -210,21 +225,18 @@ export default function Search() {
       const requestData: Record<string, string> = {};
 
       // Add nameGuid if available - using selectedName.guid directly
-      if (selectedName?.guid) {
+      if (selectedName?.guid && selectedName.type.toLowerCase() === 'practitioner') {
         requestData.nameGuid = selectedName.guid;
+      }
+
+      if (selectedName?.guid && selectedName.type.toLowerCase() === 'specialty') {
+        requestData.specialtyGuid = selectedName.guid;
       }
 
       // Add stateGuid if available
       if (stateValue?.guid) {
         requestData.stateGuid = stateValue.guid;
       }
-
-      // Update debug values
-      setDebugValues({
-        nameGuid: selectedName?.guid || '',
-        stateGuid: stateValue?.guid || '',
-        orgGuid: selectedOrg?.guid || '',
-      });
 
       // Only proceed if we have at least one guid to search with
       if (Object.keys(requestData).length === 0) {
@@ -352,6 +364,7 @@ export default function Search() {
                             setSelectedName({
                               name: newValue,
                               guid: '',
+                              type: ''
                             });
                           } else if (newValue) {
                             // Handle selection from dropdown with proper guid
@@ -601,7 +614,7 @@ export default function Search() {
                 {searchResults.map((result, index) => (
                   <Link
                     key={result.id || index}
-                    to={`/organization/${result.id}/map`}
+                    to={`/organization/${result.id}/map?${useParams}`}
                     viewTransition
                   >
                     <div className="p-4 bg-neutral-100 rounded text-center hover:bg-neutral-200 transition-colors">
