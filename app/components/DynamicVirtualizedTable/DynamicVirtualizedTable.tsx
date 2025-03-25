@@ -75,25 +75,38 @@ function deriveColumns<T extends object>(
       numeric: config.numeric !== undefined ? config.numeric : isNumeric,
       width: config.width || defaultColumnWidth,
       renderCell: config.renderCell,
-      // Set order from config or use a high number as default (to place at the end)
+      // Use a high default order
       order: config.order !== undefined ? config.order : 1000,
     };
   });
 
-  // Apply explicit column order if provided
+  // If columnOrder is provided, create a new array based on columnOrder
   if (columnOrder && columnOrder.length > 0) {
-    // Create a map for O(1) lookup of order by key
-    const orderMap = new Map(columnOrder.map((key, index) => [key, index]));
+    // First, create a map of all columns by dataKey for easy lookup
+    const columnsMap = new Map(columns.map(col => [col.dataKey, col]));
     
-    // Apply explicit order for keys that are in the columnOrder array
-    columns.forEach(column => {
-      if (orderMap.has(column.dataKey)) {
-        column.order = orderMap.get(column.dataKey);
+    // Create ordered columns array based on columnOrder
+    const orderedColumns: ColumnData[] = [];
+    
+    // First add columns that are in the columnOrder array
+    columnOrder.forEach((key, index) => {
+      if (columnsMap.has(key)) {
+        const column = columnsMap.get(key)!;
+        column.order = index; // Set order based on position in columnOrder
+        orderedColumns.push(column);
+        columnsMap.delete(key); // Remove from map to avoid duplicates
       }
     });
+    
+    // Then add any remaining columns
+    columnsMap.forEach(column => {
+      orderedColumns.push(column);
+    });
+    
+    return orderedColumns;
   }
 
-  // Sort columns by order
+  // If no columnOrder, sort by the order property
   return columns.sort((a, b) => (a.order || 1000) - (b.order || 1000));
 }
 
@@ -111,7 +124,7 @@ function DynamicVirtualizedTable<T extends object>({
     () => deriveColumns(data, excludeKeys, columnConfig, defaultColumnWidth, columnOrder),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
-      data.length > 0 ? data[0] : null, // Only depend on the first item's structure
+      data.length > 0 ? JSON.stringify(Object.keys(data[0])) : '', // Only depend on the structure
       excludeKeys.join(','), // Convert arrays to strings for comparison
       JSON.stringify(columnConfig), // Convert objects to strings for comparison
       defaultColumnWidth,
@@ -182,6 +195,9 @@ function DynamicVirtualizedTable<T extends object>({
       </Paper>
     );
   }
+
+  // Debug log to check column order
+  console.log('Columns after ordering:', columns.map(c => c.dataKey));
 
   return (
     <Paper style={{ height, width }}>
