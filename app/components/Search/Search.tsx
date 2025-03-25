@@ -116,6 +116,15 @@ export default function Search() {
     type: string;
   } | null>(null);
 
+  // Reset search state when inputs are cleared
+  const resetSearchState = () => {
+    if (!selectedName?.guid && !stateValue?.guid && !selectedOrg?.guid) {
+      setSearchResults([]);
+      setError(null);
+      setHasSearched(false);
+    }
+  };
+
   // State for Organization Autocomplete
   const [orgInputValue, setOrgInputValue] = useState('');
   const [orgOptions, setOrgOptions] = useState<
@@ -229,6 +238,9 @@ export default function Search() {
   const debouncedNameInput = useDebounce(nameInputValue, 300);
   const debouncedOrgInput = useDebounce(orgInputValue, 300);
 
+  // State to track if a search has been performed
+  const [hasSearched, setHasSearched] = useState(false);
+
   // Initialize form
   const form = useAppForm({
     defaultValues: {
@@ -245,6 +257,7 @@ export default function Search() {
     },
     onSubmit: ({ value }) => {
       setError(null);
+      setHasSearched(true);
 
       // CASE 1: If organization is selected, check data exists before navigating
       if (selectedOrg?.guid) {
@@ -419,6 +432,8 @@ export default function Search() {
                           } else {
                             // Handle clearing the selection
                             setSelectedName(null);
+                            // Reset search state if all fields are empty
+                            setTimeout(resetSearchState, 0);
                           }
 
                           // Update the form field with just the name
@@ -493,6 +508,10 @@ export default function Search() {
                         onChange={(event, newValue) => {
                           setStateValue(newValue);
                           field.handleChange(newValue?.id || '');
+                          // Reset search state if all fields are now empty
+                          if (!newValue) {
+                            setTimeout(resetSearchState, 0);
+                          }
                         }}
                         inputValue={stateInputValue}
                         onInputChange={(event, newInputValue) => {
@@ -574,6 +593,8 @@ export default function Search() {
                           } else {
                             // Handle clearing the selection
                             setSelectedOrg(null);
+                            // Reset search state if all fields are empty
+                            setTimeout(resetSearchState, 0);
                           }
 
                           field.handleChange(
@@ -656,7 +677,8 @@ export default function Search() {
 
         {/* Display search results */}
         <Box className="mt-2 mb-8 py-8 max-w-6xl mx-auto p-8 bg-white">
-          {searchResults.length > 0 && (
+          {/* Only show results section if there are results or if there's an error to display */}
+          {(searchResults.length > 0 || (hasSearched && (error || searchMutation.error || checkOrgDataMutation.error))) && (
             <div className="mt-8 border rounded-lg p-8">
               <h2 className="text-xl font-bold">Results</h2>
               <div className="mt-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -681,13 +703,15 @@ export default function Search() {
             </div>
           )}
           
-          {/* Display a message when there are no results and no error */}
+          {/* Display a message when there are no results after a search was performed */}
           {searchResults.length === 0 && 
            !searchMutation.isPending && 
            !checkingOrgData && 
            !error && 
            !searchMutation.error && 
-           !checkOrgDataMutation.error && (
+           !checkOrgDataMutation.error && 
+           hasSearched && 
+           (selectedName?.guid || stateValue?.guid || selectedOrg?.guid) && (
             <div className="mt-8 p-4 text-center">
               <p>No results found. Please try different search criteria.</p>
             </div>
