@@ -27,7 +27,6 @@ interface VirtualizedTableProps<T extends object> {
   columnConfig?: Record<string, Partial<ColumnData>>;
   defaultColumnWidth?: number | 'auto'; // Allow 'auto' as default
   columnOrder?: string[]; // Add explicit column order option
-  columnLabels?: Record<string, string>; // Add custom column labels option
 }
 
 const VirtuosoTableComponents: TableComponents<any> = {
@@ -55,8 +54,7 @@ function deriveColumns<T extends object>(
   excludeKeys: string[],
   columnConfig: Record<string, Partial<ColumnData>>,
   defaultColumnWidth: number | 'auto',
-  columnOrder?: string[],
-  columnLabels?: Record<string, string>
+  columnOrder?: string[]
 ): ColumnData[] {
   if (!data || data.length === 0) return [];
 
@@ -73,10 +71,7 @@ function deriveColumns<T extends object>(
 
     return {
       dataKey: key,
-      // Priority: 1. Column labels from props, 2. Config label, 3. Capitalized key
-      label: (columnLabels && columnLabels[key]) || 
-             config.label || 
-             key.charAt(0).toUpperCase() + key.slice(1),
+      label: config.label || key.charAt(0).toUpperCase() + key.slice(1),
       numeric: config.numeric !== undefined ? config.numeric : isNumeric,
       width: config.width || defaultColumnWidth,
       renderCell: config.renderCell,
@@ -110,11 +105,10 @@ function DynamicVirtualizedTable<T extends object>({
   columnConfig = {},
   defaultColumnWidth = 'auto', // Change default to 'auto'
   columnOrder,
-  columnLabels,
 }: VirtualizedTableProps<T>) {
   // Derive columns only once during initial render or when inputs change
   const columns = React.useMemo(
-    () => deriveColumns(data, excludeKeys, columnConfig, defaultColumnWidth, columnOrder, columnLabels),
+    () => deriveColumns(data, excludeKeys, columnConfig, defaultColumnWidth, columnOrder),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       data.length > 0 ? data[0] : null, // Only depend on the first item's structure
@@ -122,7 +116,6 @@ function DynamicVirtualizedTable<T extends object>({
       JSON.stringify(columnConfig), // Convert objects to strings for comparison
       defaultColumnWidth,
       columnOrder?.join(','), // Add columnOrder to dependencies
-      JSON.stringify(columnLabels), // Add columnLabels to dependencies
     ]
   );
 
