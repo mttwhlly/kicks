@@ -79,6 +79,26 @@ const fetchStates = async () => {
   return response.json();
 };
 
+// Function to check if organization has data available
+const checkOrgDataExists = async (orgGuid: string) => {
+  const url = `http://localhost:5041/api/nova/${orgGuid}/providersandlocations`;
+
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    return false;
+  }
+
+  const data = await response.json();
+  // Return true if data exists (you may need to adjust this based on the actual API response structure)
+  return Array.isArray(data) ? data.length > 0 : !!data;
+};
+
 export default function Search() {
   // Navigation helper
   const navigate = (url: string) => {
@@ -118,6 +138,7 @@ export default function Search() {
   // State for search results
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [error, setError] = useState<Error | null>(null);
+  const [checkingOrgData, setCheckingOrgData] = useState(false);
 
   // Setup React Query mutation for search
   const searchMutation = useMutation({
@@ -173,6 +194,37 @@ export default function Search() {
     },
   });
 
+  // Setup React Query mutation for checking organization data
+  const checkOrgDataMutation = useMutation({
+    mutationFn: async ({ orgGuid, queryParams }: { orgGuid: string; queryParams: URLSearchParams }) => {
+      setCheckingOrgData(true);
+      const dataExists = await checkOrgDataExists(orgGuid);
+      
+      if (!dataExists) {
+        throw new Error(`No data available for this organization.`);
+      }
+      
+      // If data exists, return the route we want to navigate to
+      const queryString = queryParams.toString();
+      return `/organization/${orgGuid}/map${
+        queryString ? `?${queryString}` : ''
+      }`;
+    },
+    onSuccess: (route) => {
+      setCheckingOrgData(false);
+      navigate(route);
+    },
+    onError: (err) => {
+      setCheckingOrgData(false);
+      setError(
+        err instanceof Error ? err : new Error('An unknown error occurred')
+      );
+      console.error('Organization data check error:', err);
+      // Clear search results to display only the error message
+      setSearchResults([]);
+    },
+  });
+
   // Debounce the search inputs to prevent excessive API calls
   const debouncedNameInput = useDebounce(nameInputValue, 300);
   const debouncedOrgInput = useDebounce(orgInputValue, 300);
@@ -194,7 +246,7 @@ export default function Search() {
     onSubmit: ({ value }) => {
       setError(null);
 
-      // CASE 1: If organization is selected, navigate to organization-specific URL with query params
+      // CASE 1: If organization is selected, check data exists before navigating
       if (selectedOrg?.guid) {
         // Build query parameters for other fields if they have values
         const queryParams = new URLSearchParams();
@@ -207,17 +259,12 @@ export default function Search() {
           queryParams.append('state', stateValue.guid);
         }
 
-        // Construct URL with dynamic route and query parameters
-        const queryString = queryParams.toString();
-        console.log(queryString)
-        const route = `/organization/${selectedOrg.guid}/map${
-          queryString ? `?${queryString}` : ''
-        }`;
-
-        // Check if selected org has data
+        // Check if selected org has data before navigating
+        checkOrgDataMutation.mutate({ 
+          orgGuid: selectedOrg.guid, 
+          queryParams 
+        });
         
-
-        navigate(route);
         return;
       }
 
@@ -582,7 +629,7 @@ export default function Search() {
 
               <IconButton
                 type="submit"
-                disabled={searchMutation.isPending}
+                disabled={searchMutation.isPending || checkOrgDataMutation.isPending}
                 className="rounded-l-none rounded-r-md p-4 bg-neutral-400 text-white text-xl hover:bg-neutral-800"
               >
                 <SearchIcon />
@@ -591,15 +638,17 @@ export default function Search() {
           </form>
 
           {/* Display loading state */}
-          {searchMutation.isPending && <p>Loading results...</p>}
+          {(searchMutation.isPending || checkingOrgData) && <p>Loading results...</p>}
 
           {/* Display error message */}
-          {(error || searchMutation.error) && (
+          {(error || searchMutation.error || checkOrgDataMutation.error) && (
             <p className="text-red-500">
               Error:{' '}
               {error?.message ||
                 (searchMutation.error instanceof Error
                   ? searchMutation.error.message
+                  : checkOrgDataMutation.error instanceof Error
+                  ? checkOrgDataMutation.error.message
                   : 'Unknown error occurred')}
             </p>
           )}
@@ -629,6 +678,18 @@ export default function Search() {
                   </Link>
                 ))}
               </div>
+            </div>
+          )}
+          
+          {/* Display a message when there are no results and no error */}
+          {searchResults.length === 0 && 
+           !searchMutation.isPending && 
+           !checkingOrgData && 
+           !error && 
+           !searchMutation.error && 
+           !checkOrgDataMutation.error && (
+            <div className="mt-8 p-4 text-center">
+              <p>No results found. Please try different search criteria.</p>
             </div>
           )}
         </Box>
