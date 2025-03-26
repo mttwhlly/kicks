@@ -180,7 +180,11 @@ export default function Search() {
       }),
     },
     onSubmit: ({ value }) => {
+      // Clear any previous errors and results
       setError(null);
+      searchMutation.reset();
+      checkOrgDataMutation.reset();
+      setSearchResults([]);
       setHasSearched(true);
 
       // CASE 1: If organization is selected, check data exists before navigating
@@ -626,73 +630,84 @@ export default function Search() {
 
         {/* Display search results */}
         <Box className="mb-8 py-8 max-w-6xl min-h-[190px] mx-auto p-8 bg-white border rounded-lg flex flex-col">
-          {/* Loading state */}
-          {(searchMutation.isPending || checkingOrgData) && (
-            <div className="mt-8 rounded-lg p-4 text-center bg-neutral-100 justify-self-center">
-              <p>Searching... Please wait.</p>
-            </div>
-          )}
-
-          {/* Error state - only shown when not loading and there's an error */}
-          {!searchMutation.isPending &&
-            !checkingOrgData &&
-            hasSearched &&
-            (error || searchMutation.error || checkOrgDataMutation.error) && (
-              <div className="mt-8 rounded-lg p-4 text-center bg-neutral-100 justify-self-center">
-                <p>No data available. Please try different search criteria.</p>
-              </div>
-            )}
-
-          {/* No results state - only shown when not loading, no error, and empty results */}
-          {!searchMutation.isPending &&
-            !checkingOrgData &&
-            hasSearched &&
-            searchResults.length === 0 &&
-            !error &&
-            !searchMutation.error &&
-            !checkOrgDataMutation.error && (
-              <div className="mt-8 rounded-lg p-4 text-center bg-neutral-100 justify-self-center">
-                <p>No results found. Please try different search criteria.</p>
-              </div>
-            )}
-
-          {/* Results state - only shown when not loading and there are results */}
-          {!searchMutation.isPending &&
-            !checkingOrgData &&
-            hasSearched &&
-            searchResults.length > 0 && (
-              <>
-                <h2 className="text-xl font-bold">Results</h2>
-                <div className="mt-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                  {searchResults.map((result, index) => (
-                    <Link
-                      key={result.id || index}
-                      to={`/organization/${result.id}/map?${useParams}`}
-                      viewTransition
-                    >
-                      <div className="p-4 bg-neutral-100 rounded text-center hover:bg-neutral-200 transition-colors">
-                        <h3 className="font-semibold">{result.name}</h3>
-                        {result.specialty && (
-                          <p>Specialty: {result.specialty}</p>
-                        )}
-                        {result.organization && (
-                          <p>Organization: {result.organization}</p>
-                        )}
-                        {result.address && <p>Address: {result.address}</p>}
-                        {result.phone && <p>Phone: {result.phone}</p>}
-                      </div>
-                    </Link>
-                  ))}
+          {/* Apply priority-based rendering to ensure only one state is shown */}
+          {(() => {
+            // Priority 1: Loading state
+            if (searchMutation.isPending || checkingOrgData) {
+              return (
+                <div className="mt-8 rounded-lg p-4 text-center bg-neutral-100 justify-self-center">
+                  <p>Searching... Please wait.</p>
                 </div>
-              </>
-            )}
+              );
+            }
 
-          {/* Initial state - shown when no search has been performed */}
-          {!hasSearched && (
-            <div className="mt-8 rounded-lg p-4 text-center bg-neutral-100 text-neutral-500 justify-self-center">
-              <p>Search above to find participating organizations.</p>
-            </div>
-          )}
+            // Priority 2: Initial state (no search performed)
+            if (!hasSearched) {
+              return (
+                <div className="mt-8 rounded-lg p-4 text-center bg-neutral-100 text-neutral-500 justify-self-center">
+                  <p>Search above to find participating organizations.</p>
+                </div>
+              );
+            }
+
+            // Priority 3: Results state
+            if (
+              searchResults.length > 0 &&
+              !error &&
+              !searchMutation.error &&
+              !checkOrgDataMutation.error
+            ) {
+              return (
+                <>
+                  <h2 className="text-xl font-bold">Results</h2>
+                  <div className="mt-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {searchResults.map((result, index) => (
+                      <Link
+                        key={result.id || index}
+                        to={`/organization/${result.id}/map?${useParams}`}
+                        viewTransition
+                      >
+                        <div className="p-4 bg-neutral-100 rounded text-center hover:bg-neutral-200 transition-colors">
+                          <h3 className="font-semibold">{result.name}</h3>
+                          {result.specialty && (
+                            <p>Specialty: {result.specialty}</p>
+                          )}
+                          {result.organization && (
+                            <p>Organization: {result.organization}</p>
+                          )}
+                          {result.address && <p>Address: {result.address}</p>}
+                          {result.phone && <p>Phone: {result.phone}</p>}
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </>
+              );
+            }
+
+            // Priority 4: Error state
+            if (error || searchMutation.error || checkOrgDataMutation.error) {
+              return (
+                <div className="mt-8 rounded-lg p-4 text-center bg-neutral-100 justify-self-center">
+                  <p>
+                    No data available. Please try different search criteria.
+                  </p>
+                </div>
+              );
+            }
+
+            // Priority 5: No results state
+            if (searchResults.length === 0) {
+              return (
+                <div className="mt-8 rounded-lg p-4 text-center bg-neutral-100 justify-self-center">
+                  <p>No results found. Please try different search criteria.</p>
+                </div>
+              );
+            }
+
+            // Default state (should never happen, but just in case)
+            return null;
+          })()}
         </Box>
       </Suspense>
     </>
