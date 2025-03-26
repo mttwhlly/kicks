@@ -13,22 +13,8 @@ import { z } from 'zod';
 import type { USStateType } from '~/types/usStates';
 import { useAppForm } from '~/hooks/use-form';
 import useDebounce from '~/hooks/use-debounce';
+import type { FilterCriteria, FilterProps } from '~/types/filter';
 
-// Filter props interface
-interface FilterProps {
-  onFilterChange: (filters: FilterCriteria) => void;
-}
-
-// Define filter criteria interface
-export interface FilterCriteria {
-  name: string;
-  city: string;
-  state: string;
-  specialty: string;
-  providerType: string;
-  acceptingNewPatients: boolean;
-  includeInactive: boolean;
-}
 
 export default function Filter({ onFilterChange }: FilterProps) {
   // Form state for each field
@@ -40,7 +26,7 @@ export default function Filter({ onFilterChange }: FilterProps) {
   const [specialtyInput, setSpecialtyInput] = useState('');
   const [providerType, setProviderType] = useState<string>('');
   const [providerTypeInput, setProviderTypeInput] = useState('');
-  const [acceptingNewPatients, setAcceptingNewPatients] = useState(false);
+  const [acceptingNewPatients, setAcceptingNewPatients] = useState(true);
   const [includeInactive, setIncludeInactive] = useState(false);
 
   // Debounce the filter inputs
@@ -133,7 +119,7 @@ export default function Filter({ onFilterChange }: FilterProps) {
             <h3 className="text-lg font-bold flex items-center gap-2">
               <TuneIcon /> Filter
             </h3>
-            <Box className="flex justify-end">
+            <Box className="flex justify-end mb-2">
               <FormGroup aria-label="position" className="justify-end" row>
                 <FormControlLabel
                   value="bottom"

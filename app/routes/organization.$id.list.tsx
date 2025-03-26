@@ -2,49 +2,11 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link, useOutletContext, useParams } from 'react-router';
 import { Box } from '@mui/material';
 import Filter from '~/components/Filter/Filter';
-import DynamicVirtualizedTable from '~/components/DynamicVirtualizedTable/DynamicVirtualizedTable';
-import type { FilterCriteria } from '~/components/Filter/Filter';
-import {
-  FilterSkeleton,
-  TableSkeleton,
-} from '~/components/Skeletons/Skeletons';
+import DynamicVirtualizedTable from '~/components/Table/DynamicVirtualizedTable';
+import { FilterSkeleton, TableSkeleton } from '~/components/Skeletons/Skeletons';
 import { formatPhoneNumber, formatZip } from '~/utils/formatters'
-
-interface TestLocationData {
-  acceptNewPatients: number;
-  addressLine1: string;
-  addressLine2?: string;
-  city: string;
-  firstName: string;
-  fullName: string;
-  lastName: string;
-  latitude: number;
-  locationCount: number;
-  longitude: number;
-  officeFaxNumber: string;
-  officePhoneExtension: string;
-  officePhoneNumber: string;
-  officeType: string;
-  participatingOrganizationId: string;
-  practiceLocationId: string;
-  practiceLocationName: string;
-  practitionerId: string;
-  providerCount: number;
-  rosterId: string;
-  state: string;
-  zip: string;
-}
-
-interface LocationData {
-  id: string;
-  name: string;
-  description: string;
-  address: string;
-  position: [number, number];
-  specialty: string;
-  locations: string;
-  status: string;
-}
+import type { FilterCriteria } from '~/types/filter'
+import type { LocationData } from '~/types/map';
 
 export default function List() {
   const params = useParams();
@@ -53,19 +15,15 @@ export default function List() {
     FilterCriteria | undefined
   >();
   const [isLoading, setIsLoading] = useState(true);
-  const [locationData, setLocationData] = useState<TestLocationData[]>([]);
+  const [locationData, setLocationData] = useState<LocationData[]>([]);
 
-const data: TestLocationData[] = useOutletContext();
+const data: LocationData[] = useOutletContext();
 
   // Fetch provider data based on plan ID
   useEffect(() => {
     let isMounted = true;
-    // Simulating an API call to fetch providers for the specific plan
-    // In a real app, you would make an actual API request here
     setIsLoading(true);
-
-    const testData: TestLocationData[] = data;
-
+    const testData: LocationData[] = data;
     // Simulated API fetch with setTimeout
     const timer = setTimeout(() => {
       if (isMounted) {
@@ -195,15 +153,18 @@ const data: TestLocationData[] = useOutletContext();
             "providerType",
             "providerTypeIdName",
             "rosterId"]}
-
+            
+            columnOrder={['fullName', 'practiceLocationName', 'addressLine1', 'officePhoneNumber']}
             columnConfig={{
               fullName: {
+     
                 label: 'Practitioner Name',
                 renderCell: (value, row) => (
                   <Link to={`/profile/${row.practitionerId}`} className="hover:underline" viewTransition>{value}</Link>
                 )
               },
               addressLine1: {
+       
                 label: 'Address',
                 width: 'auto',
                 renderCell: (value, row) => (
@@ -218,16 +179,17 @@ const data: TestLocationData[] = useOutletContext();
               //   ) 
               // },
               practiceLocationName: {
+         
                 label: 'Location Name'
               },
               officePhoneNumber: {
+        
                 label: 'Phone Number',
                 renderCell: (value) => (
                   <div>{formatPhoneNumber(value)}</div>
                 ) 
               }
             }}
-            columnOrder={['fullName', 'addressLine1', 'practiceLocationName', 'address']}
           />
         </Box>
       )}

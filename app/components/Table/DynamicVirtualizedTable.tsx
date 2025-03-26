@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { Link } from 'react-router';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
@@ -130,13 +129,6 @@ function DynamicVirtualizedTable<T extends object>({
       columnOrder?.join(','),
     ]
   );
-
-  // For debugging
-  React.useEffect(() => {
-    if (columns.length > 0) {
-      console.log('Column order in table:', columns.map(c => c.dataKey));
-    }
-  }, [columns]);
 
   const fixedHeaderContent = React.useCallback(() => {
     return (

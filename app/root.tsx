@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import {
   isRouteErrorResponse,
   Links,
@@ -10,12 +11,11 @@ import { CacheProvider } from '@emotion/react';
 import createCache from '@emotion/cache';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
-import { CssBaseline } from '@mui/material';
+import { CssBaseline, LinearProgress } from '@mui/material';
 import type { Route } from './+types/root';
 import './app.css';
 import Header from './components/Header/Header';
 import Footer from './components/Footer/Footer';
-import { useLocation } from 'react-router';
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -43,6 +43,16 @@ export const links: Route.LinksFunction = () => [
   },
 ];
 
+const LoadingOverlay = ({ isLoading }) => {
+  if (!isLoading) return null;
+
+  return (
+    <div className='fixed top-0 left-0 right-0 z-50'>
+      <LinearProgress color="inherit" />
+    </div>
+  )
+}
+
 export function Layout(
   { children }: { children: React.ReactNode },
   emotionCache = clientSideEmotionCache
@@ -61,9 +71,7 @@ export function Layout(
       <body className="flex flex-col h-screen justify-between antialiased">
         <QueryClientProvider client={queryClient}>
           <CacheProvider value={emotionCache}>
-            <Header />
-            <main className="mb-auto">{children}</main>
-            <Footer />
+            <AppContent>{children}</AppContent>
           </CacheProvider>
           <ReactQueryDevtools initialIsOpen={false} />
         </QueryClientProvider>
@@ -72,6 +80,25 @@ export function Layout(
       </body>
     </html>
   );
+}
+
+function AppContent({ children }) {
+
+  return (
+    <>
+      <Header />
+      <main className='mb-auto'>
+        <Suspense fallback={<LinearProgress color="inherit"/>}>
+          {children}
+        </Suspense>
+      </main>
+      <Footer />
+    </>
+  )
+}
+
+export function HydrateFallback() {
+  return <LoadingOverlay isLoading={true} />;
 }
 
 export default function App() {

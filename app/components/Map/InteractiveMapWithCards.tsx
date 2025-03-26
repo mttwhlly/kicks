@@ -1,141 +1,8 @@
 import { useState, useEffect, Suspense, lazy, useMemo } from 'react';
 import { Link } from 'react-router';
 import { Chip } from '@mui/material';
-import type { FilterCriteria } from '../Filter/Filter';
-import { formatZip } from '~/utils/formatters'
-
-// Type for location data
-interface LocationData {
-  id: number;
-  name: string;
-  description: string;
-  address: string;
-  position: [number, number];
-  specialty: string;
-  locations: string;
-  status: string;
-}
-
-interface TestLocationData {
-  acceptNewPatients: 100000000 | 100000001 | null;
-  addressLine1: string;
-  addressLine2?: string;
-  city: string;
-  firstName: string;
-  fullName: string;
-  lastName: string;
-  latitude: number;
-  locationCount: number;
-  longitude: number;
-  officeFaxNumber: string;
-  officePhoneExtension: string;
-  officePhoneNumber: string;
-  officeType: string;
-  participatingOrganizationId: string;
-  practiceLocationId: string;
-  practiceLocationName: string;
-  practitionerId: string;
-  providerCount: number;
-  rosterId: string;
-  state: string;
-  zip: string;
-}
-
-// Props for the component
-interface InteractiveMapWithCardsProps {
-  filterCriteria?: FilterCriteria;
-  initialData?: LocationData[];
-}
-
-// const profile = {
-//   id: '889A9D5F-4690-ED11-A896-000D3A8A723F'
-// }
-
-// Sample location data
-// const defaultLocationData: LocationData[] = [
-//   {
-//     id: 1,
-//     name: 'Michael P White NP',
-//     description: '',
-//     address: '123 Cool Kid Street, San Francisco, CA 94117',
-//     position: [37.7684, -122.4362],
-//     specialty: 'Registered Nurse, Medical-Surgical',
-//     locations: '5',
-//     status: 'Active',
-//   },
-//   {
-//     id: 2,
-//     name: 'Dr. Alice Auburn',
-//     description: '',
-//     address: '501 Stanyan St, San Francisco, CA 94117',
-//     position: [37.7694, -122.4862],
-//     specialty: 'Orthopedic Surgery',
-//     locations: '2',
-//     status: 'Active',
-//   },
-//   {
-//     id: 3,
-//     name: 'Dr. Bob Blue',
-//     description: '',
-//     address: '123 Main St, San Francisco, CA 94105',
-//     position: [37.7749, -122.4194],
-//     specialty: 'Cardiology',
-//     locations: '3',
-//     status: 'Active',
-//   },
-//   {
-//     id: 4,
-//     name: 'Dr. Carol Crimson',
-//     description: '',
-//     address: '456 Elm St, San Francisco, CA 94107',
-//     position: [37.7849, -122.4094],
-//     specialty: 'Neurology',
-//     locations: '1',
-//     status: 'Inactive',
-//   },
-//   {
-//     id: 5,
-//     name: 'Dr. David Emerald',
-//     description: '',
-//     address: '789 Oak St, San Francisco, CA 94108',
-//     position: [37.7949, -122.3994],
-//     specialty: 'Pediatrics',
-//     locations: '4',
-//     status: 'Active',
-//   },
-//   {
-//     id: 6,
-//     name: 'Dr. Eva Emerald',
-//     description: '',
-//     address: '321 Maple St, San Francisco, CA 94109',
-//     position: [37.7649, -122.4094],
-//     specialty: 'Dermatology',
-//     locations: '2',
-//     status: 'Active',
-//   },
-//   {
-//     id: 7,
-//     name: 'Dr. Frank Fuchsia',
-//     description: '',
-//     address: '654 Pine St, San Francisco, CA 94110',
-//     position: [37.7749, -122.3994],
-//     specialty: 'Gynecology',
-//     locations: '3',
-//     status: 'Inactive',
-//   },
-//   {
-//     id: 8,
-//     name: 'Dr. Grace Green',
-//     description: '',
-//     address: '321 Birch St, San Francisco, CA 94111',
-//     position: [37.7849, -122.3894],
-//     specialty: 'Psychiatry',
-//     locations: '1',
-//     status: 'Active',
-//   },
-// ];
-
-
+import { formatZip } from '~/utils/formatters';
+import type { InteractiveMapWithCardsProps, LocationData } from '~/types/map';
 
 // Lazy load the map component to ensure it only loads on the client
 const MapComponent = lazy(() => import('./MapComponent'));
@@ -146,7 +13,7 @@ const InteractiveMapWithCards = ({
 }: InteractiveMapWithCardsProps) => {
   const [selectedLocation, setSelectedLocation] = useState(0);
   const [isBrowser, setIsBrowser] = useState(false);
-  const [locationData, setLocationData] = useState<TestLocationData[]>(initialData);
+  const [locationData, setLocationData] = useState<LocationData[]>(initialData);
 
   // Check if we're in the browser environment
   useEffect(() => {
@@ -249,8 +116,8 @@ const InteractiveMapWithCards = ({
                 onClick={() => handleCardClick(index)}
               >
                 <div className="flex justify-between mb-2">
-                  <Link to={`/profile/${location.practitionerId}`} viewTransition><h3 className="text-md font-semibold hover:underline">{location.practiceLocationName}</h3></Link>
-       {/* TODO: update with status data */}
+                  <Link to={`/profile/${location.practitionerId}`} viewTransition><h3 className="text-md font-semibold hover:underline">{location.fullName}</h3></Link>
+                  {/* TODO: update with status data */}
                   {/* <Chip
                     label={location.status}
                     variant="outlined"

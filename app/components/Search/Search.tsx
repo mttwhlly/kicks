@@ -6,98 +6,8 @@ import { z } from 'zod';
 import type { USStateType } from '~/types/usStates';
 import { useAppForm } from '~/hooks/use-form';
 import { useMutation, useQuery } from '@tanstack/react-query';
+import { fetchNameSuggestions, fetchOrgSuggestions, fetchStates, checkOrgDataExists } from '~/utils/fetchers'
 import useDebounce from '~/hooks/use-debounce';
-
-// Function to fetch name/specialty suggestions
-const fetchNameSuggestions = async (query: string) => {
-  if (!query || query.length < 2) return [];
-
-  const url = `http://localhost:5041/api/search/practitionerorspecialty?searchString=${encodeURIComponent(
-    query
-  )}`;
-
-  const response = await fetch(url, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(
-      errorText || `Request failed with status ${response.status}`
-    );
-  }
-
-  return response.json();
-};
-
-// Function to fetch organization suggestions
-const fetchOrgSuggestions = async (query: string) => {
-  if (!query || query.length < 2) return [];
-
-  const url = `http://localhost:5041/api/search/po?searchString=${encodeURIComponent(
-    query
-  )}`;
-
-  const response = await fetch(url, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(
-      errorText || `Request failed with status ${response.status}`
-    );
-  }
-
-  return response.json();
-};
-
-// Function to fetch states from API
-const fetchStates = async () => {
-  const url = 'http://localhost:5041/api/search/states';
-
-  const response = await fetch(url, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(
-      errorText || `Request failed with status ${response.status}`
-    );
-  }
-
-  return response.json();
-};
-
-// Function to check if organization has data available
-const checkOrgDataExists = async (orgGuid: string) => {
-  const url = `http://localhost:5041/api/nova/${orgGuid}/providersandlocations`;
-
-  const response = await fetch(url, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
-
-  if (!response.ok) {
-    return false;
-  }
-
-  const data = await response.json();
-  // Return true if data exists (you may need to adjust this based on the actual API response structure)
-  return Array.isArray(data) ? data.length > 0 : !!data;
-};
 
 export default function Search() {
   // Navigation helper
@@ -356,6 +266,7 @@ export default function Search() {
         ? orgSuggestions.map((org) => ({
             name: org.name || '',
             guid: org.participatingOrganizationId || '',
+            type: org.type || ''
           }))
         : [];
 
@@ -418,6 +329,7 @@ export default function Search() {
                         }}
                         value={selectedName}
                         onChange={(event, newValue) => {
+                          setHasSearched(false);
                           if (typeof newValue === 'string') {
                             // Handle free text input
                             // Don't set a guid for free text input
@@ -506,6 +418,7 @@ export default function Search() {
                         disablePortal
                         value={stateValue}
                         onChange={(event, newValue) => {
+                          setHasSearched(false);
                           setStateValue(newValue);
                           field.handleChange(newValue?.id || '');
                           // Reset search state if all fields are now empty
@@ -515,6 +428,7 @@ export default function Search() {
                         }}
                         inputValue={stateInputValue}
                         onInputChange={(event, newInputValue) => {
+                          setHasSearched(false);
                           setStateInputValue(newInputValue);
                         }}
                         options={states}
@@ -581,6 +495,7 @@ export default function Search() {
                         }}
                         value={selectedOrg}
                         onChange={(event, newValue) => {
+                          setHasSearched(false);
                           if (typeof newValue === 'string') {
                             // Handle free text input
                             setSelectedOrg({
@@ -657,29 +572,13 @@ export default function Search() {
               </IconButton>
             </Box>
           </form>
-
-          {/* Display loading state */}
-          {(searchMutation.isPending || checkingOrgData) && <p>Loading results...</p>}
-
-          {/* Display error message */}
-          {(error || searchMutation.error || checkOrgDataMutation.error) && (
-            <p className="text-red-500">
-              Error:{' '}
-              {error?.message ||
-                (searchMutation.error instanceof Error
-                  ? searchMutation.error.message
-                  : checkOrgDataMutation.error instanceof Error
-                  ? checkOrgDataMutation.error.message
-                  : 'Unknown error occurred')}
-            </p>
-          )}
         </Box>
 
         {/* Display search results */}
         <Box className="mt-2 mb-8 py-8 max-w-6xl mx-auto p-8 bg-white">
           {/* Only show results section if there are results or if there's an error to display */}
-          {(searchResults.length > 0 || (hasSearched && (error || searchMutation.error || checkOrgDataMutation.error))) && (
-            <div className="mt-8 border rounded-lg p-8">
+          {(hasSearched && searchResults.length > 0) && (
+            <div className="mt-8 border rounded-lg p-8 pt-5">
               <h2 className="text-xl font-bold">Results</h2>
               <div className="mt-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {searchResults.map((result, index) => (
@@ -702,6 +601,12 @@ export default function Search() {
               </div>
             </div>
           )}
+
+          {(hasSearched && (error || searchMutation.error || checkOrgDataMutation.error)) && (
+            <div className="mt-8 p-4 text-center">
+            <p>No data available. Please try different search criteria.</p>
+          </div>
+          )}
           
           {/* Display a message when there are no results after a search was performed */}
           {searchResults.length === 0 && 
@@ -711,6 +616,7 @@ export default function Search() {
            !searchMutation.error && 
            !checkOrgDataMutation.error && 
            hasSearched && 
+           (error || searchMutation.error || checkOrgDataMutation.error) &&
            (selectedName?.guid || stateValue?.guid || selectedOrg?.guid) && (
             <div className="mt-8 p-4 text-center">
               <p>No results found. Please try different search criteria.</p>
