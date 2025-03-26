@@ -33,10 +33,14 @@ export default function Search() {
 
   // Reset search state when inputs are cleared
   const resetSearchState = () => {
+    // Only reset if all selection fields are empty
     if (!selectedName?.guid && !stateValue?.guid && !selectedOrg?.guid) {
       setSearchResults([]);
       setError(null);
       setHasSearched(false);
+      // Clear any mutation errors as well
+      searchMutation.reset();
+      checkOrgDataMutation.reset();
     }
   };
 
@@ -447,12 +451,20 @@ export default function Search() {
                         disablePortal
                         value={stateValue}
                         onChange={(event, newValue) => {
+                          // When a selection changes, we should consider the search state invalid
                           setHasSearched(false);
+
                           setStateValue(newValue);
                           field.handleChange(newValue?.id || '');
-                          // Reset search state if all fields are now empty
+
+                          // Handle clearing the selection
                           if (!newValue) {
-                            setTimeout(resetSearchState, 0);
+                            setSearchResults([]);
+                            setError(null);
+                            // Check if all fields are now empty
+                            if (!selectedName?.guid && !selectedOrg?.guid) {
+                              setHasSearched(false);
+                            }
                           }
                         }}
                         inputValue={stateInputValue}
@@ -524,7 +536,9 @@ export default function Search() {
                         }}
                         value={selectedOrg}
                         onChange={(event, newValue) => {
+                          // When a selection changes, we should consider the search state invalid
                           setHasSearched(false);
+
                           if (typeof newValue === 'string') {
                             // Handle free text input
                             setSelectedOrg({
@@ -537,8 +551,13 @@ export default function Search() {
                           } else {
                             // Handle clearing the selection
                             setSelectedOrg(null);
-                            // Reset search state if all fields are empty
-                            setTimeout(resetSearchState, 0);
+                            // Reset search results immediately when clearing a field
+                            setSearchResults([]);
+                            setError(null);
+                            // Check if all fields are now empty
+                            if (!selectedName?.guid && !stateValue?.guid) {
+                              setHasSearched(false);
+                            }
                           }
 
                           field.handleChange(
