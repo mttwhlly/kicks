@@ -6,7 +6,12 @@ import { z } from 'zod';
 import type { USStateType } from '~/types/usStates';
 import { useAppForm } from '~/hooks/use-form';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { fetchNameSuggestions, fetchOrgSuggestions, fetchStates, checkOrgDataExists } from '~/utils/fetchers'
+import {
+  fetchNameSuggestions,
+  fetchOrgSuggestions,
+  fetchStates,
+  checkOrgDataExists,
+} from '~/utils/fetchers';
 import useDebounce from '~/hooks/use-debounce';
 
 export default function Search() {
@@ -62,7 +67,6 @@ export default function Search() {
   // Setup React Query mutation for search
   const searchMutation = useMutation({
     mutationFn: async (searchData: Record<string, string>) => {
-
       // Build query parameters for other fields if they have values
       const queryParams = new URLSearchParams();
 
@@ -115,14 +119,20 @@ export default function Search() {
 
   // Setup React Query mutation for checking organization data
   const checkOrgDataMutation = useMutation({
-    mutationFn: async ({ orgGuid, queryParams }: { orgGuid: string; queryParams: URLSearchParams }) => {
+    mutationFn: async ({
+      orgGuid,
+      queryParams,
+    }: {
+      orgGuid: string;
+      queryParams: URLSearchParams;
+    }) => {
       setCheckingOrgData(true);
       const dataExists = await checkOrgDataExists(orgGuid);
-      
+
       if (!dataExists) {
         throw new Error(`No data available for this organization.`);
       }
-      
+
       // If data exists, return the route we want to navigate to
       const queryString = queryParams.toString();
       return `/organization/${orgGuid}/map${
@@ -183,11 +193,11 @@ export default function Search() {
         }
 
         // Check if selected org has data before navigating
-        checkOrgDataMutation.mutate({ 
-          orgGuid: selectedOrg.guid, 
-          queryParams 
+        checkOrgDataMutation.mutate({
+          orgGuid: selectedOrg.guid,
+          queryParams,
         });
-        
+
         return;
       }
 
@@ -195,11 +205,17 @@ export default function Search() {
       const requestData: Record<string, string> = {};
 
       // Add nameGuid if available - using selectedName.guid directly
-      if (selectedName?.guid && selectedName.type.toLowerCase() === 'practitioner') {
+      if (
+        selectedName?.guid &&
+        selectedName.type.toLowerCase() === 'practitioner'
+      ) {
         requestData.nameGuid = selectedName.guid;
       }
 
-      if (selectedName?.guid && selectedName.type.toLowerCase() === 'specialty') {
+      if (
+        selectedName?.guid &&
+        selectedName.type.toLowerCase() === 'specialty'
+      ) {
         requestData.specialtyGuid = selectedName.guid;
       }
 
@@ -245,7 +261,7 @@ export default function Search() {
         ? nameSuggestions.map((provider) => ({
             name: provider.name || '',
             guid: provider.id || '',
-            type: provider.type || ''
+            type: provider.type || '',
           }))
         : [];
 
@@ -266,7 +282,7 @@ export default function Search() {
         ? orgSuggestions.map((org) => ({
             name: org.name || '',
             guid: org.participatingOrganizationId || '',
-            type: org.type || ''
+            type: org.type || '',
           }))
         : [];
 
@@ -336,7 +352,7 @@ export default function Search() {
                             setSelectedName({
                               name: newValue,
                               guid: '',
-                              type: ''
+                              type: '',
                             });
                           } else if (newValue) {
                             // Handle selection from dropdown with proper guid
@@ -355,7 +371,11 @@ export default function Search() {
                               : newValue?.name || ''
                           );
                         }}
-                        getOptionLabel={(option: {name: string; guid: string; type: string;}) => {
+                        getOptionLabel={(option: {
+                          name: string;
+                          guid: string;
+                          type: string;
+                        }) => {
                           // Handle both string and object options
                           if (typeof option === 'string') {
                             return option;
@@ -372,9 +392,18 @@ export default function Search() {
                         className="flex-1"
                         renderOption={(props, option) => (
                           <li {...props} key={option.guid}>
-                            <Box className='flex justify-between w-full'>
+                            <Box className="flex justify-between w-full">
                               <Box>{option.name}</Box>
-                              <Chip variant='outlined' size="small" label={option.type.toLowerCase() === 'practitioner' ? 'Practitioner' : 'Specialty'} className='text-neutral-500'/>
+                              <Chip
+                                variant="outlined"
+                                size="small"
+                                label={
+                                  option.type.toLowerCase() === 'practitioner'
+                                    ? 'Practitioner'
+                                    : 'Specialty'
+                                }
+                                className="text-neutral-500"
+                              />
                             </Box>
                           </li>
                         )}
@@ -565,7 +594,9 @@ export default function Search() {
 
               <IconButton
                 type="submit"
-                disabled={searchMutation.isPending || checkOrgDataMutation.isPending}
+                disabled={
+                  searchMutation.isPending || checkOrgDataMutation.isPending
+                }
                 className="rounded-l-none rounded-r-md p-4 bg-neutral-400 text-white text-xl hover:bg-neutral-800"
               >
                 <SearchIcon />
@@ -576,50 +607,71 @@ export default function Search() {
 
         {/* Display search results */}
         <Box className="mt-2 mb-8 py-8 max-w-6xl mx-auto p-8 bg-white">
-          {/* Only show results section if there are results or if there's an error to display */}
-          {(hasSearched && searchResults.length > 0) && (
-            <div className="mt-8 border rounded-lg p-8 pt-5">
-              <h2 className="text-xl font-bold">Results</h2>
-              <div className="mt-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {searchResults.map((result, index) => (
-                  <Link
-                    key={result.id || index}
-                    to={`/organization/${result.id}/map?${useParams}`}
-                    viewTransition
-                  >
-                    <div className="p-4 bg-neutral-100 rounded text-center hover:bg-neutral-200 transition-colors">
-                      <h3 className="font-semibold">{result.name}</h3>
-                      {result.specialty && <p>Specialty: {result.specialty}</p>}
-                      {result.organization && (
-                        <p>Organization: {result.organization}</p>
-                      )}
-                      {result.address && <p>Address: {result.address}</p>}
-                      {result.phone && <p>Phone: {result.phone}</p>}
-                    </div>
-                  </Link>
-                ))}
-              </div>
+          {/* Loading state */}
+          {(searchMutation.isPending || checkingOrgData) && (
+            <div className="mt-8 p-4 text-center">
+              <p>Searching... Please wait.</p>
             </div>
           )}
 
-          {(hasSearched && (error || searchMutation.error || checkOrgDataMutation.error)) && (
-            <div className="mt-8 p-4 text-center">
-            <p>No data available. Please try different search criteria.</p>
-          </div>
-          )}
-          
-          {/* Display a message when there are no results after a search was performed */}
-          {searchResults.length === 0 && 
-           !searchMutation.isPending && 
-           !checkingOrgData && 
-           !error && 
-           !searchMutation.error && 
-           !checkOrgDataMutation.error && 
-           hasSearched && 
-           (error || searchMutation.error || checkOrgDataMutation.error) &&
-           (selectedName?.guid || stateValue?.guid || selectedOrg?.guid) && (
-            <div className="mt-8 p-4 text-center">
-              <p>No results found. Please try different search criteria.</p>
+          {/* Error state - only shown when not loading and there's an error */}
+          {!searchMutation.isPending &&
+            !checkingOrgData &&
+            hasSearched &&
+            (error || searchMutation.error || checkOrgDataMutation.error) && (
+              <div className="mt-8 p-4 text-center bg-red-50 text-red-700 border border-red-100 rounded">
+                <p>No data available. Please try different search criteria.</p>
+              </div>
+            )}
+
+          {/* No results state - only shown when not loading, no error, and empty results */}
+          {!searchMutation.isPending &&
+            !checkingOrgData &&
+            hasSearched &&
+            searchResults.length === 0 &&
+            !error &&
+            !searchMutation.error &&
+            !checkOrgDataMutation.error && (
+              <div className="mt-8 p-4 text-center">
+                <p>No results found. Please try different search criteria.</p>
+              </div>
+            )}
+
+          {/* Results state - only shown when not loading and there are results */}
+          {!searchMutation.isPending &&
+            !checkingOrgData &&
+            hasSearched &&
+            searchResults.length > 0 && (
+              <div className="mt-8 border rounded-lg p-8 pt-5">
+                <h2 className="text-xl font-bold">Results</h2>
+                <div className="mt-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {searchResults.map((result, index) => (
+                    <Link
+                      key={result.id || index}
+                      to={`/organization/${result.id}/map?${useParams}`}
+                      viewTransition
+                    >
+                      <div className="p-4 bg-neutral-100 rounded text-center hover:bg-neutral-200 transition-colors">
+                        <h3 className="font-semibold">{result.name}</h3>
+                        {result.specialty && (
+                          <p>Specialty: {result.specialty}</p>
+                        )}
+                        {result.organization && (
+                          <p>Organization: {result.organization}</p>
+                        )}
+                        {result.address && <p>Address: {result.address}</p>}
+                        {result.phone && <p>Phone: {result.phone}</p>}
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+
+          {/* Initial state - shown when no search has been performed */}
+          {!hasSearched && (
+            <div className="mt-8 p-4 text-center text-neutral-500">
+              <p>Use the search form above to find results.</p>
             </div>
           )}
         </Box>
