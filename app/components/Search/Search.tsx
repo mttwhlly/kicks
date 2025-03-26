@@ -325,7 +325,7 @@ export default function Search() {
   return (
     <>
       <Suspense fallback={<p>Loading...</p>}>
-        <Box className="my-8 py-8 max-w-6xl mx-auto p-8 bg-neutral-100">
+        <Box className="my-18 py-8 max-w-6xl min-h-[190px] mx-auto p-8 bg-neutral-100">
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -625,10 +625,10 @@ export default function Search() {
         </Box>
 
         {/* Display search results */}
-        <Box className="mt-2 mb-8 py-8 max-w-6xl mx-auto p-8 bg-white">
+        <Box className="mb-8 py-8 max-w-6xl min-h-[190px] mx-auto p-8 bg-white border rounded-lg flex flex-col">
           {/* Loading state */}
           {(searchMutation.isPending || checkingOrgData) && (
-            <div className="mt-8 p-4 text-center">
+            <div className="mt-8 rounded-lg p-4 text-center bg-neutral-100 justify-self-center">
               <p>Searching... Please wait.</p>
             </div>
           )}
@@ -638,7 +638,7 @@ export default function Search() {
             !checkingOrgData &&
             hasSearched &&
             (error || searchMutation.error || checkOrgDataMutation.error) && (
-              <div className="mt-8 p-4 text-center bg-red-50 text-red-700 border border-red-100 rounded">
+              <div className="mt-8 rounded-lg p-4 text-center bg-neutral-100 justify-self-center">
                 <p>No data available. Please try different search criteria.</p>
               </div>
             )}
@@ -651,7 +651,7 @@ export default function Search() {
             !error &&
             !searchMutation.error &&
             !checkOrgDataMutation.error && (
-              <div className="mt-8 p-4 text-center">
+              <div className="mt-8 rounded-lg p-4 text-center bg-neutral-100 justify-self-center">
                 <p>No results found. Please try different search criteria.</p>
               </div>
             )}
@@ -661,7 +661,7 @@ export default function Search() {
             !checkingOrgData &&
             hasSearched &&
             searchResults.length > 0 && (
-              <div className="mt-8 border rounded-lg p-8 pt-5">
+              <>
                 <h2 className="text-xl font-bold">Results</h2>
                 <div className="mt-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                   {searchResults.map((result, index) => (
@@ -684,13 +684,13 @@ export default function Search() {
                     </Link>
                   ))}
                 </div>
-              </div>
+              </>
             )}
 
           {/* Initial state - shown when no search has been performed */}
           {!hasSearched && (
-            <div className="mt-8 p-4 text-center text-neutral-500">
-              <p>Use the search form above to find results.</p>
+            <div className="mt-8 rounded-lg p-4 text-center bg-neutral-100 text-neutral-500 justify-self-center">
+              <p>Search above to find participating organizations.</p>
             </div>
           )}
         </Box>
