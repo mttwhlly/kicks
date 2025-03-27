@@ -143,7 +143,7 @@ function DynamicVirtualizedTable<T extends object>({
               whiteSpace: 'nowrap',
             }}
             sx={{ backgroundColor: 'background.paper' }}
-            className="font-bold uppercase"
+            className="font-bold uppercase bg-neutral-200"
           >
             {column.label}
           </TableCell>

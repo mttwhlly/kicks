@@ -22,6 +22,7 @@ export interface LocationData {
   providerCount: number;
   rosterId: string;
   state: string;
+  stateCode: number;
   zip: string;
 }
 

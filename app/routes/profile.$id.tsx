@@ -170,14 +170,20 @@ export default function Practitioner({loaderData}:Route.ComponentProps){
           </Box>
         </Box>
         <Box className="max-w-3xl mx-auto gap-4 flex flex-col my-4">
+        <h2 className="text-xl font-bold mt-4">{`Health Plan Network (${poData.length})`}</h2>
+          <Box className="flex flex-row gap-4 overflow-x-scroll">
+            <Stack direction="row" spacing={2}>
+              {poData.map((po) => (
+                <Card className="px-2 py-8 bg-neutral-100 rounded text-center hover:bg-neutral-200 transition-colors my-2 w-3xs font-semibold shadow-none"><Link to={`/organization/${po.id}/map`} viewTransition>{po.name}</Link></Card>
+              ))}
+            </Stack>
+          </Box>
           <h2 className="text-xl font-bold mt-4">Contact Information</h2>
           <p>
             <PublicIcon /> <a href={`https://${data.contactInfo.website}`}>{data.contactInfo.website}</a>
           </p>
           <p>
-            <a href={data.contactInfo.email}>
-              <EmailOutlinedIcon /> <a href={`mailto:${data.contactInfo.email}`}>{data.contactInfo.email}</a>
-            </a>
+            <EmailOutlinedIcon /> <a href={`mailto:${data.contactInfo.email}`}>{data.contactInfo.email}</a>
           </p>
           <h2 className="text-xl font-bold mt-8">
             Public Notice ({data.publicNotice.length})
@@ -272,14 +278,6 @@ export default function Practitioner({loaderData}:Route.ComponentProps){
             </AccordionDetails>
           </Accordion>
           <Card className="p-4 my-2">{practitionerData.nationalProviderId ?? 'No National Provider Id (NPI) found'}</Card>
-          <h2 className="text-xl font-bold mt-4">{`Health Plan Network (${poData.length})`}</h2>
-          <Box className="flex flex-row gap-4 overflow-x-scroll">
-            <Stack direction="row" spacing={2}>
-              {poData.map((po) => (
-                <Card className="p-4 bg-neutral-100 rounded text-center hover:bg-neutral-200 transition-colors my-2 w-3xs font-semibold shadow-none"><Link to={`/organization/${po.id}/map`} viewTransition>{po.name}</Link></Card>
-              ))}
-            </Stack>
-          </Box>
         </Box>
       </>
 

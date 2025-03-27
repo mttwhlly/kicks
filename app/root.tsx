@@ -6,6 +6,7 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  useLocation
 } from 'react-router';
 import { CacheProvider } from '@emotion/react';
 import createCache from '@emotion/cache';
@@ -59,6 +60,8 @@ export function Layout(
 ) {
   const queryClient = new QueryClient();
 
+  const location = useLocation();
+
   return (
     <html lang="en">
       <head>
@@ -68,7 +71,7 @@ export function Layout(
         <Links />
       </head>
       <CssBaseline />
-      <body className="flex flex-col h-screen justify-between antialiased">
+      <body className={`flex flex-col justify-between antialiased ${location.pathname === '/' ? 'bg-linear-180 from-neutral-200 to-white border-[68px] border-t-white border-x-white border-b-none border-b-0 min-h-screen h-full' : 'h-screen'}`}>
         <QueryClientProvider client={queryClient}>
           <CacheProvider value={emotionCache}>
             <AppContent>{children}</AppContent>

@@ -91,12 +91,12 @@ const data: LocationData[] = useOutletContext();
       // }
 
       // Filter by status (active/inactive)
-      // if (
-      //   !filterCriteria.includeInactive &&
-      //   location.status.toLowerCase() === 'inactive'
-      // ) {
-      //   return false;
-      // }
+      if (
+        !filterCriteria.includeInactive &&
+        location.stateCode === 1
+      ) {
+        return false;
+      }
 
       return true;
     });
@@ -130,6 +130,7 @@ const data: LocationData[] = useOutletContext();
 
           {/* Virtualized Table Component */}
           <DynamicVirtualizedTable
+            height={800}
             data={filteredData}
             excludeKeys={[
             "acceptNewPatients",
@@ -153,14 +154,13 @@ const data: LocationData[] = useOutletContext();
             "providerType",
             "providerTypeIdName",
             "rosterId"]}
-            
             columnOrder={['fullName', 'practiceLocationName', 'addressLine1', 'officePhoneNumber']}
             columnConfig={{
               fullName: {
      
                 label: 'Practitioner Name',
                 renderCell: (value, row) => (
-                  <Link to={`/profile/${row.practitionerId}`} className="hover:underline" viewTransition>{value}</Link>
+                  <Link to={`/profile/${row.practitionerId}`} className="hover:underline" viewTransition>{value !== null ? value : `${row.firstName} ${row.lastName}`}</Link>
                 )
               },
               addressLine1: {
@@ -188,6 +188,12 @@ const data: LocationData[] = useOutletContext();
                 renderCell: (value) => (
                   <div>{formatPhoneNumber(value)}</div>
                 ) 
+              },
+              stateCode: {
+                label: 'Status',
+                renderCell: (value) => (
+                  <div>{value === 0 ? 'Active' : 'Inactive'}</div>
+                )
               }
             }}
           />

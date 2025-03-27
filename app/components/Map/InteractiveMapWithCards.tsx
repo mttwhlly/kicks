@@ -77,12 +77,12 @@ const InteractiveMapWithCards = ({
       // }
 
       // Filter by status (active/inactive)
-      // if (
-      //   !filterCriteria.includeInactive &&
-      //   location.status.toLowerCase() === 'inactive'
-      // ) {
-      //   return false;
-      // }
+      if (
+        !filterCriteria.includeInactive &&
+        location.stateCode === 1
+      ) {
+        return false;
+      }
 
       return true;
     });
@@ -118,16 +118,17 @@ const InteractiveMapWithCards = ({
                 <div className="flex justify-between mb-2">
                   <Link to={`/profile/${location.practitionerId}`} viewTransition><h3 className="text-md font-semibold hover:underline">{location.fullName}</h3></Link>
                   {/* TODO: update with status data */}
-                  {/* <Chip
-                    label={location.status}
+                  <Chip
+                    label={location.stateCode === 0 ? 'Active' : 'Inactive'}
                     variant="outlined"
                     color={
-                      location.status.toLowerCase() === 'inactive'
+                      location.stateCode === 1
                         ? 'error'
                         : 'primary'
                     }
                     size="small"
-                  /> */}
+                    className='ml-1'
+                  />
                 </div>
                 {location.addressLine1 && <p className="my-0">{location.addressLine1}</p>}
                 {location.addressLine2 && <p className="my-0">{location?.addressLine2}</p>}
