@@ -1,4 +1,4 @@
-import { Suspense } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import {
   isRouteErrorResponse,
   Links,
@@ -24,7 +24,7 @@ export function meta({}: Route.MetaArgs) {
     {
       name: 'description',
       content:
-        'Find providers in your network. Verified Provider & Facility Data.',
+        'Find practitioners in your network. Verified Practitioner & Facility Data.',
     },
   ];
 }
@@ -61,6 +61,40 @@ export function Layout(
   const queryClient = new QueryClient();
 
   const location = useLocation();
+  const [isHomePage, setIsHomePage] = useState(false);
+  
+  // Use useEffect to determine if we're on the homepage after component mounts
+  // This ensures we have access to window object and runs on the client side
+  useEffect(() => {
+    const checkIfHomePage = () => {
+      // First try with React Router's location
+      if (location.pathname === '/' || location.pathname === '') {
+        setIsHomePage(true);
+        return;
+      }
+      
+      // Direct check with window.location
+      const path = window.location.pathname;
+      
+      // Check if it's root or has only a trailing slash or index.html
+      if (path === '/' || path === '' || path === '/index.html') {
+        setIsHomePage(true);
+        return;
+      }
+      
+      // Check if we're at the base URL with no additional segments
+      const pathSegments = path.split('/').filter(Boolean);
+      if (pathSegments.length === 0) {
+        setIsHomePage(true);
+        return;
+      }
+      
+      setIsHomePage(false);
+    };
+    
+    // Run the check when component mounts
+    checkIfHomePage();
+  }, [location.pathname]); // Re-run when pathname changes
 
   return (
     <html lang="en">
@@ -71,7 +105,7 @@ export function Layout(
         <Links />
       </head>
       <CssBaseline />
-      <body className={`flex flex-col justify-between antialiased ${location.pathname === '/' ? 'bg-linear-180 from-neutral-200 to-white border-[68px] border-t-white border-x-white border-b-none border-b-0 min-h-screen h-full' : 'h-screen'}`}>
+      <body className={`flex flex-col justify-between antialiased ${isHomePage ? 'bg-linear-180 from-neutral-200 to-white border-[68px] border-t-white border-x-white border-b-none border-b-0 min-h-screen h-full' : 'h-screen'}`}>
         <QueryClientProvider client={queryClient}>
           <CacheProvider value={emotionCache}>
             <AppContent>{children}</AppContent>

@@ -1,0 +1,1 @@
+import{r as u}from"./chunk-K6CSEXPM-D4OhfGCF.js";function l(t,o=166){let e;function n(...r){const c=()=>{t.apply(this,r)};clearTimeout(e),e=setTimeout(c,o)}return n.clear=()=>{clearTimeout(e)},n}function a(t){return t&&t.ownerDocument||document}function d(t){return a(t).defaultView||window}const s=u.createContext(),m=()=>u.useContext(s)??!1;export{a,l as d,d as o,m as u};
