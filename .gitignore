@@ -4,10 +4,10 @@ node_modules/
 .pnp.js
 
 # Production build folders
-/build/
-/dist/
-/out/
-/.next/
+build/
+dist/
+out/
+.next/
 
 # Testing
 /coverage/
