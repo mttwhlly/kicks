@@ -1,5 +1,4 @@
 import { Box } from '@mui/material';
-import { useLocation } from 'react-router';
 
 export default function Footer() {
   return (

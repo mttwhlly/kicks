@@ -24,10 +24,7 @@ function HideOnScroll(props: Props) {
 export default function Header() {
   return (
     <HideOnScroll>
-      <AppBar
-
-        className="bg-transparent text-black text-lg font-bold shadow-none"
-      >
+      <AppBar className="bg-transparent text-black text-lg font-bold shadow-none">
         <Toolbar>
           <Link
             to="/"
@@ -35,7 +32,7 @@ export default function Header() {
             viewTransition
           >
             <Logo className="h-[1rem] w-[78px]" />
-            <span className="text-[1rem] ml-2 pt-0.5">NOVA</span>
+            {/* <span className="text-[1rem] ml-2 pt-0.5">NOVA</span> */}
           </Link>
         </Toolbar>
       </AppBar>
