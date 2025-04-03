@@ -8,18 +8,4 @@ declare module "react-router" {
 
 type Params = {
   "/": {};
-  "/organization": {};
-  "/organization/:id": {
-    "id": string;
-  };
-  "/organization/:id/list": {
-    "id": string;
-  };
-  "/organization/:id/map": {
-    "id": string;
-  };
-  "/profile": {};
-  "/profile/:id": {
-    "id": string;
-  };
 };
