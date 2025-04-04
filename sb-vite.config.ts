@@ -1,12 +1,22 @@
-import { defineConfig, loadEnv } from 'vite';
-import tsconfigPaths from 'vite-tsconfig-paths';
+// import { defineConfig } from 'vite';
+// import { reactRouter } from '@react-router/dev/vite';
+// import tailwindcss from '@tailwindcss/vite';
+// import tsconfigPaths from 'vite-tsconfig-paths';
+// import svgr from 'vite-plugin-svgr';
 
-export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, process.cwd(), '');
-  process.env = { ...process.env, ...env };
+// export default defineConfig({
+//   plugins: [reactRouter(), tailwindcss(), tsconfigPaths(), svgr()],
+//   ssr: {
+//     noExternal: ['@mui/icons-material'],
+//   },
+//   optimizeDeps: {
+//     include: ['@mui/icons-material'],
+//   },
+// });
 
-  return {
-    // no Remix Vite plugin here
-    plugins: [tsconfigPaths()],
-  };
+import { defineConfig } from 'vite';
+import { reactRouter } from '@react-router/dev/vite';
+
+export default defineConfig({
+  plugins: [reactRouter()],
 });

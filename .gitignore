@@ -58,3 +58,4 @@ yarn-error.log*
 Thumbs.db
 *.pem
 .cache/
+*storybook.log
