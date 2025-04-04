@@ -1,6 +1,6 @@
 import React, { Suspense, useState } from 'react';
 import { Box, LinearProgress, Tab, Tabs, ToggleButton, ToggleButtonGroup } from '@mui/material';
-import { Link as RouterLink, Outlet, useLocation, useNavigate, useParams } from 'react-router';
+import { Outlet, useLocation, useNavigate, useParams } from 'react-router';
 import type { Route } from './+types/organization.$id';
 
 export async function clientLoader({
