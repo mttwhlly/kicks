@@ -134,7 +134,7 @@ const InteractiveMapWithCards = ({
           <div className="space-y-4">
             {filteredData.map((location) => (
               <div
-                key={location.practitionerId}
+                key={`card-wrapper-${location.practitionerId}`}
                 id={`card-${filteredData.indexOf(location)}`}
                 className={`p-4 rounded-lg shadow-md cursor-pointer transition-all duration-100 ${
                   selectedLocationId === location.practitionerId
