@@ -6,7 +6,8 @@ import type { Route } from './+types/organization.$id';
 export async function clientLoader({
     params,
   }: Route.ClientLoaderArgs) {
-    const res = await fetch(`http://localhost:5041/api/nova/${params.id}/providersandlocations`);
+    const apiUrl = import.meta.env.VITE_NOVA_API_URL
+    const res = await fetch(`${apiUrl}/api/nova/${params.id}/providersandlocations`);
     const data = await res.json();
     return data;
   }
@@ -52,7 +53,7 @@ export default function Organization({loaderData}:Route.ComponentProps) {
       <Box className="flex justify-between max-w-6xl mx-auto p-5 mt-[120px]">
         <Box>
           <h1 className="text-5xl font-bold mb-6">{data && data.participatingOrganizationName}</h1>
-          <p>{data.totalProviderCount?.toLocaleString()} Providers</p>
+          <p>{data.totalProviderCount?.toLocaleString()} Practitioners</p>
           <p>{data.totalLocationCount?.toLocaleString()} Locations</p>
         </Box>
         <Box className="h-6">
