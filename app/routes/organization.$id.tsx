@@ -1,6 +1,6 @@
 import React, { Suspense, useState } from 'react';
 import { Box, LinearProgress, Tab, Tabs, ToggleButton, ToggleButtonGroup } from '@mui/material';
-import { Link, Outlet, useLocation, useNavigate, useParams } from 'react-router';
+import { Link as RouterLink, Outlet, useLocation, useNavigate, useParams } from 'react-router';
 import type { Route } from './+types/organization.$id';
 
 export async function clientLoader({
@@ -11,24 +11,20 @@ export async function clientLoader({
     const data = await res.json();
     return data;
   }
-
-
+  
 export default function Organization({loaderData}:Route.ComponentProps) {
-
   const data = loaderData;
-
   const [type, setType] = useState('practitioner');
   const params = useParams();
   const location = useLocation();
   const navigate = useNavigate();
   const planId = params.id;
-
+  
   // Determine which tab is active based on the URL path
   const isMapView = location.pathname.includes('/map');
   const isListView = location.pathname.includes('/list');
   const tabValue = isMapView ? 0 : isListView ? 1 : 0;
-
-
+  
   const handleTabChange = (
     event: React.SyntheticEvent,
     newTabValue: number
@@ -40,19 +36,26 @@ export default function Organization({loaderData}:Route.ComponentProps) {
       navigate(`/organization/${planId}/list`);
     }
   };
-
+  
   const handleChange = (
     event: React.MouseEvent<HTMLElement>,
-    newAlignment: string
+    newAlignment: string | null
   ) => {
-    setType(newAlignment);
+    if (newAlignment !== null) {
+      setType(newAlignment);
+    }
   };
 
+  // Make sure data is available before rendering
+  if (!data) {
+    return <LinearProgress color="inherit" />;
+  }
+  
   return (
     <Suspense fallback={<LinearProgress color="inherit" />}>
       <Box className="flex justify-between max-w-6xl mx-auto p-5 mt-[120px]">
         <Box>
-          <h1 className="text-5xl font-bold mb-6">{data && data.participatingOrganizationName}</h1>
+          <h1 className="text-5xl font-bold mb-6">{data.participatingOrganizationName}</h1>
           <p>{data.totalProviderCount?.toLocaleString()} Practitioners</p>
           <p>{data.totalLocationCount?.toLocaleString()} Locations</p>
         </Box>
@@ -69,12 +72,11 @@ export default function Organization({loaderData}:Route.ComponentProps) {
           </ToggleButtonGroup>
         </Box>
       </Box>
-
       <Box className="max-w-6xl mx-auto p-5">
         <Box className="rounded-lg max-w-8xl mx-auto">
           <Box className="flex flex-col gap-2 max-w-6xl mx-auto">
             <h2 className="text-2xl font-bold">
-              Browse practitioners in-network with {data && data.participatingOrganizationName}
+              Browse practitioners in-network with {data.participatingOrganizationName}
             </h2>
             <p>Filter and browse our directory for accurate practitioner data</p>
           </Box>
@@ -90,13 +92,12 @@ export default function Organization({loaderData}:Route.ComponentProps) {
                 >
                   <Tab
                     label="Map View"
-                    component={Link}
-                    to={`/organization/${data.participatingOrganizationId}/map`}
+                    // Use the navigate function directly instead of Link component
+                    onClick={() => navigate(`/organization/${data.participatingOrganizationId}/map`)}
                   />
                   <Tab
                     label="List View"
-                    component={Link}
-                    to={`/organization/${data.participatingOrganizationId}/list`}
+                    onClick={() => navigate(`/organization/${data.participatingOrganizationId}/list`)}
                   />
                 </Tabs>
               </Box>
