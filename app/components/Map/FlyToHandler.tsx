@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import L from 'leaflet';
 
-export const FlyToHandler = ({ map, selectedLocation, locations }) => {
+export const FlyToHandler = ({ map, selectedLocation, locations, setSelectedPracticeLocationId }) => {
   // Keep track of previous markers to avoid popup conflicts
   const previousMarkerRef = useRef(null);
   
@@ -17,6 +17,12 @@ export const FlyToHandler = ({ map, selectedLocation, locations }) => {
       if (selected && !isNaN(selected.latitude) && !isNaN(selected.longitude)) {
         // Store selected location ID to ensure we're working with the correct data
         const selectedId = selected.practitionerId;
+        const selectedPracticeId = selected.practiceLocationId;
+        
+        // Update the practice location ID
+        if (setSelectedPracticeLocationId) {
+          setSelectedPracticeLocationId(selectedPracticeId);
+        }
         
         // Fly to the location
         const markerPosition = [selected.latitude, selected.longitude];
