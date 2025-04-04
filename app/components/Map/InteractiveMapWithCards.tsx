@@ -11,6 +11,10 @@ const InteractiveMapWithCards = ({
   filterCriteria,
   initialData,
 }: InteractiveMapWithCardsProps) => {
+  // Change to track by ID instead of index for more reliable synchronization
+  const [selectedLocationId, setSelectedLocationId] = useState(null);
+  
+  // Keep the selectedLocation index for backward compatibility with existing components
   const [selectedLocation, setSelectedLocation] = useState(0);
   const [isBrowser, setIsBrowser] = useState(false);
   const [locationData, setLocationData] = useState<LocationData[]>(initialData);
@@ -21,8 +25,9 @@ const InteractiveMapWithCards = ({
   }, []);
 
   // Function to handle card click
-  const handleCardClick = (locationId: number) => {
-    setSelectedLocation(locationId);
+  const handleCardClick = (locationId, index) => {
+    setSelectedLocationId(locationId);
+    setSelectedLocation(index);
   };
 
   // Filter data based on criteria
@@ -88,32 +93,55 @@ const InteractiveMapWithCards = ({
     });
   }, [filterCriteria, locationData]);
 
+  // Set the first location as selected by default if none is selected
+  useEffect(() => {
+    if (filteredData.length > 0 && selectedLocationId === null) {
+      setSelectedLocationId(filteredData[0].practitionerId);
+      setSelectedLocation(0);
+    }
+  }, [filteredData, selectedLocationId]);
+
+  // Find the index of the currently selected location in the filtered data
+  const selectedLocationIndex = useMemo(() => {
+    return filteredData.findIndex(location => location.practitionerId === selectedLocationId);
+  }, [filteredData, selectedLocationId]);
+
+  // Scroll the selected card into view when it changes
+  useEffect(() => {
+    if (selectedLocationIndex >= 0) {
+      const cardElement = document.getElementById(`card-${selectedLocationId}`);
+      if (cardElement) {
+        cardElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    }
+  }, [selectedLocationId, selectedLocationIndex]);
+
   return (
     <>
     <div className="flex flex-col md:flex-row max-w-6xl mx-auto max-h-svh h-[40rem] bg-gray-100">
       {/* Card Stack Section */}
       <div className="w-full md:w-1/3 h-1/2 md:h-full overflow-y-auto p-4 bg-white border border-neutral-200">
-    <div className="mb-4">
-      <p className="font-medium text-gray-700">
-        Showing {filteredData.length} of {locationData.length} practitioners
-      </p>
-    </div>
+        <div className="mb-4">
+          <p className="font-medium text-gray-700">
+            Showing {filteredData.length} of {locationData.length} practitioners
+          </p>
+        </div>
         {filteredData.length === 0 ? (
           <div className="p-4 text-center text-gray-500">
             No practitioners match your current filters
           </div>
         ) : (
           <div className="space-y-4">
-            {filteredData.map((location, index) => (
+            {filteredData.map((location) => (
               <div
-                key={index}
-                id={`card-${index}`}
+                key={location.practitionerId}
+                id={`card-${filteredData.indexOf(location)}`}
                 className={`p-4 rounded-lg shadow-md cursor-pointer transition-all duration-100 ${
-                  selectedLocation === index
+                  selectedLocationId === location.practitionerId
                     ? 'outline-blue-400 outline bg-blue-50'
                     : 'hover:bg-gray-50'
                 }`}
-                onClick={() => handleCardClick(index)}
+                onClick={() => handleCardClick(location.practitionerId, filteredData.indexOf(location))}
               >
                 <div className="flex justify-between mb-2">
                   <Link to={`/profile/${location.practitionerId}`} viewTransition><h3 className="text-md font-semibold hover:underline">{location.fullName}</h3></Link>
@@ -159,6 +187,8 @@ const InteractiveMapWithCards = ({
               locations={filteredData}
               selectedLocation={selectedLocation}
               setSelectedLocation={setSelectedLocation}
+              selectedLocationId={selectedLocationId}
+              setSelectedLocationId={setSelectedLocationId}
             />
           </Suspense>
         ) : (
