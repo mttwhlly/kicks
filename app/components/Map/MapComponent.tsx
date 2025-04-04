@@ -17,7 +17,9 @@ const MapComponent = ({
   selectedLocation,
   setSelectedLocation,
   selectedLocationId,
-  setSelectedLocationId
+  setSelectedLocationId,
+  selectedPracticeLocationId,
+  setSelectedPracticeLocationId
 }: MapComponentProps) => {
   const [map, setMap] = useState(null);
   const markersRef = useRef({});
@@ -56,6 +58,7 @@ const MapComponent = ({
     // Update the selectedLocationId based on the clicked marker's location
     if (locations[index]) {
       setSelectedLocationId(locations[index].practitionerId);
+      setSelectedPracticeLocationId(locations[index].practiceLocationId);
     }
     
     // Auto-scroll to the card
@@ -88,7 +91,12 @@ const MapComponent = ({
             <Marker
               key={index}
               position={[location.latitude, location.longitude]}
-              icon={index === selectedLocation ? SelectedMarkerIcon : MarkerIcon}
+              icon={
+                (location.practitionerId === selectedLocationId && 
+                 location.practiceLocationId === selectedPracticeLocationId) 
+                ? SelectedMarkerIcon 
+                : MarkerIcon
+              }
               eventHandlers={{
                 click: () => handleMarkerClick(index),
               }}
