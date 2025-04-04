@@ -1,15 +1,15 @@
 import type { FilterCriteria } from "./filter";
 
 export interface LocationData {
-  acceptNewPatients: 100000000 | 100000001 | null;
-  addressLine1: string;
+  acceptNewPatients?: number;
+  addressLine1?: string;
   addressLine2?: string;
-  city: string;
-  firstName: string;
-  fullName: string;
-  lastName: string;
+  city?: string;
+  firstName?: string;
+  fullName?: string;
+  lastName?: string;
   latitude: number;
-  locationCount: number;
+  locationCount?: number;
   longitude: number;
   officeFaxNumber: string;
   officePhoneExtension: string;
@@ -18,20 +18,34 @@ export interface LocationData {
   participatingOrganizationId: string;
   practiceLocationId: string;
   practiceLocationName: string;
-  practitionerId: string;
+  practitionerId: number | string;
   providerCount: number;
   rosterId: string;
-  state: string;
-  zip: string;
+  state?: string;
+  stateCode?: number;
+  zip?: string;
+  practitionerId: number | string;
 }
 
 export interface MapComponentProps {
   locations: LocationData[];
   selectedLocation: number;
-  setSelectedLocation: (id: number) => void;
+  setSelectedLocation: (index: number) => void;
+  selectedLocationId?: number | string | null;
+  setSelectedLocationId?: (id: number | string | null) => void;
 }
 
 export interface InteractiveMapWithCardsProps {
   filterCriteria?: FilterCriteria;
   initialData?: LocationData[];
+}
+
+export interface FitBoundsToMarkersProps {
+  locations: LocationData[];
+}
+
+export interface FlyToHandlerProps {
+  map: any; // You might want to use the proper Leaflet map type here
+  selectedLocation: number;
+  locations: LocationData[];
 }
