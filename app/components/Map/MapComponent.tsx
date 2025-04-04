@@ -9,13 +9,19 @@ import { formatZip } from '~/utils/formatters';
 import type { MapComponentProps } from '~/types/map';
 import L from 'leaflet';
 
+// Create a selected marker icon if you have one, or use the regular one
+const SelectedMarkerIcon = MarkerIcon; 
+
 const MapComponent = ({
   locations,
   selectedLocation,
   setSelectedLocation,
+  selectedLocationId,
+  setSelectedLocationId
 }: MapComponentProps) => {
   const [map, setMap] = useState(null);
   const markersRef = useRef({});
+  const popupRefs = useRef({});
 
   // Set up Leaflet icons
   useEffect(() => {
@@ -27,11 +33,33 @@ const MapComponent = ({
     });
   }, []);
 
+  // Open the popup for the selected location when it changes
+  useEffect(() => {
+    if (selectedLocation !== undefined && markersRef.current[selectedLocation]) {
+      // Get the marker for the selected location
+      const marker = markersRef.current[selectedLocation];
+      
+      // Open the popup
+      if (marker) {
+        setTimeout(() => {
+          marker.openPopup();
+        }, 100);
+      }
+    }
+  }, [selectedLocation, locations]);
+
   // Function to handle marker click
-  const handleMarkerClick = (locationId: number) => {
-    setSelectedLocation(locationId);
+  const handleMarkerClick = (index: number) => {
+    // Update both selectedLocation (index) and selectedLocationId
+    setSelectedLocation(index);
+    
+    // Update the selectedLocationId based on the clicked marker's location
+    if (locations[index]) {
+      setSelectedLocationId(locations[index].practitionerId);
+    }
+    
     // Auto-scroll to the card
-    const cardElement = document.getElementById(`card-${locationId}`);
+    const cardElement = document.getElementById(`card-${index}`);
     if (cardElement) {
       cardElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
@@ -48,7 +76,6 @@ const MapComponent = ({
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
-
       {locations.length === 0 ? (
         <div className="leaflet-top leaflet-center">
           <div className="leaflet-control bg-white p-2 rounded shadow-md">
@@ -61,7 +88,7 @@ const MapComponent = ({
             <Marker
               key={index}
               position={[location.latitude, location.longitude]}
-              icon={MarkerIcon}
+              icon={index === selectedLocation ? SelectedMarkerIcon : MarkerIcon}
               eventHandlers={{
                 click: () => handleMarkerClick(index),
               }}
@@ -82,10 +109,8 @@ const MapComponent = ({
               </Popup>
             </Marker>
           ))}
-
           {/* Automatically fit bounds when locations change */}
           {locations.length > 1 && <FitBoundsToMarkers locations={locations} />}
-
           {/* Handle flying to selected location */}
           {map && (
             <FlyToHandler
