@@ -13,6 +13,7 @@ const InteractiveMapWithCards = ({
 }: InteractiveMapWithCardsProps) => {
   // Change to track by ID instead of index for more reliable synchronization
   const [selectedLocationId, setSelectedLocationId] = useState(null);
+  const [selectedPracticeLocationId, setSelectedPracticeLocationId] = useState(null);
   
   // Keep the selectedLocation index for backward compatibility with existing components
   const [selectedLocation, setSelectedLocation] = useState(0);
@@ -25,8 +26,9 @@ const InteractiveMapWithCards = ({
   }, []);
 
   // Function to handle card click
-  const handleCardClick = (locationId, index) => {
+  const handleCardClick = (locationId, index, practiceLocationId) => {
     setSelectedLocationId(locationId);
+    setSelectedPracticeLocationId(practiceLocationId);
     setSelectedLocation(index);
   };
 
@@ -97,6 +99,7 @@ const InteractiveMapWithCards = ({
   useEffect(() => {
     if (filteredData.length > 0 && selectedLocationId === null) {
       setSelectedLocationId(filteredData[0].practitionerId);
+      setSelectedPracticeLocationId(filteredData[0].practiceLocationId);
       setSelectedLocation(0);
     }
   }, [filteredData, selectedLocationId]);
@@ -134,15 +137,15 @@ const InteractiveMapWithCards = ({
           <div className="space-y-4">
             {filteredData.map((location) => (
               <div
-                key={`card-${location.practitionerId}-${location.latitude}-${location.longitude}`}
+                key={`card-${location.practitionerId}-${location.practiceLocationId}-${location.latitude}-${location.longitude}`}
                 id={`card-${filteredData.indexOf(location)}`}
                 className={`p-4 rounded-lg shadow-md cursor-pointer transition-all duration-100 ${
                   selectedLocationId === location.practitionerId && 
-                  filteredData.indexOf(location) === selectedLocation
+                  selectedPracticeLocationId === location.practiceLocationId
                     ? 'outline-blue-400 outline bg-blue-50'
                     : 'hover:bg-gray-50'
                 }`}
-                onClick={() => handleCardClick(location.practitionerId, filteredData.indexOf(location))}
+                onClick={() => handleCardClick(location.practitionerId, filteredData.indexOf(location), location.practiceLocationId)}
               >
                 <div className="flex justify-between mb-2">
                   <Link to={`/profile/${location.practitionerId}`} viewTransition><h3 className="text-md font-semibold hover:underline">{location.fullName}</h3></Link>
@@ -190,6 +193,8 @@ const InteractiveMapWithCards = ({
               setSelectedLocation={setSelectedLocation}
               selectedLocationId={selectedLocationId}
               setSelectedLocationId={setSelectedLocationId}
+              selectedPracticeLocationId={selectedPracticeLocationId}
+              setSelectedPracticeLocationId={setSelectedPracticeLocationId}
             />
           </Suspense>
         ) : (
