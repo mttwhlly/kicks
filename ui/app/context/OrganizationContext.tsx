@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useMemo, useEffect } from 'react';
-import { LocationData } from '~/types/map';
-import { FilterCriteria } from '~/types/filter';
+import type { LocationData } from '~/types/map';
+import type { FilterCriteria } from '~/types/filter';
 
 // Types for organization context
 interface OrganizationContextState {

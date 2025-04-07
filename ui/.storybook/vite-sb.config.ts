@@ -2,13 +2,15 @@
 import { defineConfig } from 'vite';
 import tsconfigPaths from 'vite-tsconfig-paths';
 import svgr from 'vite-plugin-svgr';
-// Intentionally NOT including the React Router plugin
+// Import the official Tailwind CSS Vite plugin
+import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
   plugins: [
     // No reactRouter() plugin here
     tsconfigPaths(),
     svgr(),
+    tailwindcss(),
   ],
   resolve: {
     alias: {
