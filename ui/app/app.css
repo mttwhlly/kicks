@@ -1,0 +1,18 @@
+@layer theme, base, components, utilities;
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities);
+/* The following line is needed to override Material UI Component styles with Tailwind classes */
+@import 'tailwindcss' important;
+
+/* Fix for React Router transitions interfering 
+or being interfered with by other DOM manipulations */
+
+[data-router-transition="active"] {
+    isolation: isolate;
+    position: relative;
+    z-index: 1;
+}
+  
+[data-router-transition="inactive"] {
+    display: none;
+}
