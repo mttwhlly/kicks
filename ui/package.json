@@ -8,7 +8,11 @@
     "dev": "react-router dev",
     "serve": "serve -s build/client -l 5173",
     "start": "react-router-serve ./build/server/index.js",
-    "typecheck": "react-router typegen && tsc"
+    "typecheck": "react-router typegen && tsc",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "npm run typecheck && storybook build",
+    "test-storybook": "test-storybook",
+    "check-storybook": "node storybook-setup.js"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -32,6 +36,17 @@
   "devDependencies": {
     "@react-router/dev": "^7.3.0",
     "@react-router/fs-routes": "^7.3.0",
+    "@storybook/addon-a11y": "^8.6.12",
+    "@storybook/addon-docs": "^8.6.12",
+    "@storybook/addon-essentials": "^8.6.12",
+    "@storybook/addon-interactions": "^8.6.12",
+    "@storybook/addon-links": "^8.6.12",
+    "@storybook/addon-onboarding": "^8.6.12",
+    "@storybook/blocks": "^8.6.12",
+    "@storybook/builder-vite": "^8.6.12",
+    "@storybook/react": "^8.6.12",
+    "@storybook/react-vite": "^8.6.12",
+    "@storybook/test": "^8.6.12",
     "@tailwindcss/vite": "^4.0.9",
     "@tanstack/eslint-plugin-query": "^5.66.1",
     "@types/leaflet": "^1.9.16",
@@ -40,6 +55,7 @@
     "@types/react-dom": "^19.0.1",
     "react-router-devtools": "^1.1.0",
     "serve": "^14.2.4",
+    "storybook": "^8.6.12",
     "tailwindcss": "^4.0.9",
     "typescript": "^5.7.2",
     "vite": "^5.4.11",

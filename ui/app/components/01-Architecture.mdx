@@ -1,0 +1,107 @@
+import { Meta } from '@storybook/blocks';
+
+<Meta title="Architecture/Overview" />
+
+# Nova UI Architecture
+
+The Nova frontend application follows a clean architecture pattern, with clear separation of concerns:
+
+## Layers
+
+### 1. UI Layer (Components)
+- Focused solely on rendering and user interaction
+- Separated by domain concerns (Search, Map, Filter, etc.)
+- Communicates with the service layer for data and business logic
+
+### 2. Service Layer 
+- Contains business logic and state management
+- Handles API communication through the api.service.ts
+- Provides hooks and utilities for components to use
+
+### 3. Data Layer
+- Handles data fetching, caching, and transformation
+- Includes context providers for state management
+- Uses React Query for data synchronization
+
+## Storybook Integration
+
+Storybook is used to document, test, and develop UI components in isolation, following these principles:
+
+### Component Development Flow
+
+1. **Create the component** with proper typing and clean separation from business logic
+2. **Create a story** to document the component's usage, props, and variants
+3. **Use mock services** to simulate data and behaviors in isolation
+4. **Document** the component's purpose, props, and usage patterns
+5. **Test** the component with different states and interactions
+
+### Mocking the Service Layer
+
+For components that depend on the service layer, we use mocks to simulate the service behavior:
+
+```tsx
+// Example of mocking the api service in a story
+import { mockApiService } from '../../.storybook/mocks';
+
+const ComponentWithMockedService = () => {
+  // Mock implementation that uses mockApiService instead of the real one
+  return <ActualComponent service={mockApiService} />;
+};
+```
+
+### Component Categories
+
+Components are organized into the following categories:
+
+- **Base Components**: Foundation elements like Header, Footer
+- **UI Components**: Interactive elements like Filter, Search
+- **Feature Components**: Domain-specific components like MapWithCards
+- **Layout Components**: Page layouts and content containers
+
+## Best Practices
+
+1. **Composability**: Components should be small, focused, and composable
+2. **Dependency Injection**: Pass dependencies to components instead of importing directly
+3. **Props API**: Ensure a clear and well-documented props API for each component
+4. **State Management**: Use React Query for server state, React context for application state
+5. **Testing**: Use Storybook interactions to test component behavior
+
+## Example Component Structure
+
+```
+ComponentName/
+  ├── ComponentName.tsx       # The component implementation
+  ├── ComponentName.stories.tsx  # Storybook stories
+  ├── ComponentService.ts    # Component-specific service (optional)
+  └── index.ts               # Exports the component
+```
+
+## Architecture Diagram
+
+```
+┌─────────────────────────────────────────────┐
+│                                             │
+│  Components (UI Layer)                      │
+│  ┌─────────────┐ ┌─────────────┐            │
+│  │    Search   │ │    Map      │            │
+│  └─────────────┘ └─────────────┘            │
+│  ┌─────────────┐ ┌─────────────┐            │
+│  │    Filter   │ │    Table    │            │
+│  └─────────────┘ └─────────────┘            │
+│                                             │
+├─────────────────────────────────────────────┤
+│                                             │
+│  Services (Business Logic Layer)            │
+│  ┌─────────────┐ ┌─────────────┐            │
+│  │ SearchSvc   │ │ Organization │            │
+│  └─────────────┘ └─────────────┘            │
+│                                             │
+├─────────────────────────────────────────────┤
+│                                             │
+│  Data Access (API Layer)                    │
+│  ┌─────────────────────────────────────┐    │
+│  │          api.service.ts             │    │
+│  └─────────────────────────────────────┘    │
+│                                             │
+└─────────────────────────────────────────────┘
+```

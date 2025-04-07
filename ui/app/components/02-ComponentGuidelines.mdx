@@ -1,0 +1,146 @@
+import { Meta } from '@storybook/blocks';
+
+<Meta title="Architecture/Component Guidelines" />
+
+# Component Development Guidelines
+
+This guide outlines best practices for developing components in the Nova application.
+
+## Component Structure
+
+### Basic Component Template
+
+```tsx
+import React from 'react';
+import { Box } from '@mui/material';
+import { useComponentService } from './ComponentService';
+
+// Define component props with TypeScript
+export interface ComponentProps {
+  // Required props
+  title: string;
+  // Optional props
+  subtitle?: string;
+  // Function props with proper typing
+  onAction?: (id: string) => void;
+}
+
+/**
+ * Component description
+ */
+export default function Component({ 
+  title,
+  subtitle,
+  onAction,
+}: ComponentProps) {
+  // Use component-specific service for business logic
+  const { data, isLoading, error } = useComponentService();
+  
+  // Handle loading state
+  if (isLoading) {
+    return <Box>Loading...</Box>;
+  }
+  
+  // Handle error state
+  if (error) {
+    return <Box>Error: {error.message}</Box>;
+  }
+  
+  // Main render
+  return (
+    <Box>
+      <h1>{title}</h1>
+      {subtitle && <h2>{subtitle}</h2>}
+      {/* Render data */}
+    </Box>
+  );
+}
+```
+
+### Component Service Template
+
+```tsx
+import { useState, useCallback } from 'react';
+import apiService from '~/services/api.service';
+
+export function useComponentService() {
+  const [data, setData] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  
+  const fetchData = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const result = await apiService.endpoint.getData();
+      setData(result);
+      setError(null);
+    } catch (err) {
+      setError(err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+  
+  return {
+    data,
+    isLoading,
+    error,
+    fetchData,
+  };
+}
+```
+
+## Best Practices
+
+### 1. Component Composition
+
+- **Single Responsibility**: Each component should do one thing well
+- **Composition over Inheritance**: Build complex components by composing smaller ones
+- **Separation of Concerns**: Separate UI rendering from business logic and data fetching
+
+### 2. Props Design
+
+- **Props API**: Design a clear, consistent props API
+- **TypeScript**: Use TypeScript for type safety and documentation
+- **Default Props**: Provide sensible defaults where appropriate
+- **Required vs Optional**: Mark props as required or optional appropriately
+
+### 3. State Management
+
+- **Local State**: Use for UI-specific state (e.g., isOpen, activeTab)
+- **Context**: Use for state that needs to be shared across components
+- **React Query**: Use for server state (data fetching, caching, updates)
+
+### 4. Performance
+
+- **Memoization**: Use React.memo for expensive components
+- **useCallback/useMemo**: For memoizing functions and values
+- **Virtualization**: For long lists (using react-virtuoso)
+- **Code Splitting**: Split large components using lazy loading
+
+### 5. Accessibility
+
+- **Semantic HTML**: Use the right HTML elements
+- **ARIA Attributes**: Add appropriate ARIA attributes
+- **Keyboard Navigation**: Ensure keyboard accessibility
+- **Color Contrast**: Maintain adequate color contrast
+
+### 6. Testing
+
+- **Stories**: Create stories for all component states
+- **Test Coverage**: Aim for high test coverage
+- **Interactions**: Test user interactions
+- **Accessibility**: Test for accessibility issues
+
+## Component Checklist
+
+Before submitting a new component, ensure it meets these criteria:
+
+- [ ] Component has a clear, single responsibility
+- [ ] Props are properly typed with TypeScript
+- [ ] Business logic is separated from UI rendering
+- [ ] Component handles loading, error, and empty states
+- [ ] Component is accessible (semantic HTML, ARIA, keyboard)
+- [ ] Component has Storybook stories documenting usage
+- [ ] Component follows the established coding style
+- [ ] Component is responsive and works on all screen sizes

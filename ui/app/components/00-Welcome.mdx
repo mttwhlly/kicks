@@ -1,0 +1,65 @@
+import { Meta } from '@storybook/blocks';
+
+<Meta title="Welcome" />
+
+# Welcome to Nova UI Storybook
+
+This Storybook contains the UI components for the Nova healthcare provider directory application. It follows clean architecture principles to separate concerns and make components reusable and maintainable.
+
+## Getting Started
+
+1. Use the sidebar to navigate between different components
+2. Each component has documentation and interactive examples
+3. Check out the "Architecture" section for details on our approach
+
+## Component Categories
+
+- **Base Components**: Foundation elements (Header, Footer)
+- **UI Components**: Interactive elements (Filter, Search)
+- **Features**: Domain-specific components (Maps, Tables)
+
+## Developing Components
+
+When developing new components, follow these steps:
+
+1. Create the component with proper TypeScript types
+2. Separate UI from business logic
+3. Create stories for different states and variations
+4. Document usage and props
+5. Test interactions and accessibility
+
+## Using the API Service Layer
+
+Components should use the service layer for data fetching and business logic:
+
+```tsx
+// Good example
+import { useSearchService } from '~/components/Search/SearchService';
+
+function SearchComponent() {
+  const { results, search, isLoading } = useSearchService();
+  // UI code here
+}
+```
+
+Rather than accessing the API directly:
+
+```tsx
+// Avoid this pattern
+import { apiService } from '~/services/api.service';
+
+function SearchComponent() {
+  const [results, setResults] = useState([]);
+  
+  useEffect(() => {
+    apiService.search.getPractitionerOrSpecialty().then(data => {
+      setResults(data);
+    });
+  }, []);
+  // UI code here
+}
+```
+
+## Need Help?
+
+Check the STORYBOOK.md file in the project root for detailed information on using and extending Storybook in this project.
