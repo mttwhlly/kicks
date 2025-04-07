@@ -1,14 +1,12 @@
 # Nova Frontend Architecture
 
-This document outlines the clean architecture principles and React Router v7 patterns implemented in the Nova frontend application.
-
 ## Clean Architecture Principles
 
-The frontend has been restructured to follow clean architecture principles:
+The frontend is structured to follow clean architecture principles:
 
 ### 1. Service Layer
 
-We've introduced a dedicated service layer to handle all API interactions and data transformation logic:
+A dedicated service layer to handle all API interactions and data transformation logic:
 
 - `api.service.ts` - Centralized API interaction with error handling
 - `organization.service.ts` - Organization-specific data management
@@ -16,7 +14,7 @@ We've introduced a dedicated service layer to handle all API interactions and da
 
 ### 2. Separation of Concerns
 
-Components are now focused on UI rendering and delegating to services for business logic:
+Components are focused on UI rendering and delegating to services for business logic:
 
 - **UI Components**: Handle rendering and user interaction
 - **Services**: Handle data fetching, transformation, and business logic
@@ -40,9 +38,9 @@ The application follows a unidirectional data flow pattern:
 3. State is updated in services or context
 4. UI re-renders based on updated state
 
-## React Router v7 Improvements
+## React Router v7
 
-We've enhanced the routing implementation to leverage React Router v7 features:
+Leveraging React Router v7 features:
 
 ### 1. Typed Route Definitions
 
