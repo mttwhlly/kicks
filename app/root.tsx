@@ -1,4 +1,4 @@
-import { Suspense } from 'react';
+import { useState, useEffect } from 'react';
 import {
   isRouteErrorResponse,
   Links,
@@ -6,32 +6,32 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
-  useLocation
+  useLocation,
 } from 'react-router';
 import { CacheProvider } from '@emotion/react';
 import createCache from '@emotion/cache';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { CssBaseline, LinearProgress } from '@mui/material';
-import { ThemeProvider } from '@mui/material/styles';
-import { theme } from '../src/presentation/themes/theme';
-import { MainLayout } from '../src/presentation/components/layouts/MainLayout';
-import '../src/index.css';
+import type { Route } from './+types/root';
+import '~/index.css';
+import Header from '~/presentation/components/features/Header/Header';
+import Footer from '~/presentation/components/features/Footer/Footer';
 
-export function meta() {
+export function meta({}: Route.MetaArgs) {
   return [
-    { title: 'Provider Directory' },
+    { title: 'CAQH NOVA' },
     {
       name: 'description',
       content:
-        'Find healthcare providers in your network. Verified practitioner & facility data.',
+        'Find practitioners in your network. Verified Practitioner & Facility Data.',
     },
   ];
 }
 
 const clientSideEmotionCache = createCache({ key: 'css' });
 
-export const links = () => [
+export const links: Route.LinksFunction = () => [
   { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
   {
     rel: 'preconnect',
@@ -44,20 +44,32 @@ export const links = () => [
   },
 ];
 
-const LoadingOverlay = ({ isLoading }: { isLoading: boolean }) => {
+const LoadingOverlay = ({ isLoading }) => {
   if (!isLoading) return null;
 
   return (
-    <div className='fixed top-0 left-0 right-0 z-50'>
+    <div className="fixed top-0 left-0 right-0 z-50">
       <LinearProgress color="inherit" />
     </div>
-  )
-}
+  );
+};
 
-export function Layout({ children }: { children: React.ReactNode }) {
-  const queryClient = new QueryClient();
+// Create QueryClient outside of component to prevent recreation on every render
+const queryClient = new QueryClient();
+
+export function Layout(
+  { children }: { children: React.ReactNode },
+  emotionCache = clientSideEmotionCache
+) {
   const location = useLocation();
-  const isHomePage = location.pathname === '/';
+  const [isHomePage, setIsHomePage] = useState(false);
+
+  // Simplified isHomePage determination
+  useEffect(() => {
+    // Simple check based on pathname only
+    const path = location.pathname;
+    setIsHomePage(path === '/' || path === '' || path === '/index.html');
+  }, [location.pathname]);
 
   return (
     <html lang="en">
@@ -67,15 +79,22 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Meta />
         <Links />
       </head>
-      <body className={`antialiased ${isHomePage ? 'bg-linear-180 from-neutral-200 to-white' : ''}`}>
+      <CssBaseline />
+      <body
+        className={`flex flex-col justify-between antialiased ${
+          isHomePage
+            ? 'bg-linear-180 from-neutral-200 to-white border-[68px] border-t-white border-x-white border-b-none border-b-0 min-h-screen h-full'
+            : 'h-screen'
+        }`}
+      >
         <QueryClientProvider client={queryClient}>
-          <ThemeProvider theme={theme}>
-            <CacheProvider value={clientSideEmotionCache}>
-              <CssBaseline />
-              <MainLayout isHomePage={isHomePage} />
-            </CacheProvider>
-            {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
-          </ThemeProvider>
+          <CacheProvider value={emotionCache}>
+            <AppContent>
+              {/* Add key prop to force clean remounts during navigation */}
+              <Outlet key={location.pathname} />
+            </AppContent>
+          </CacheProvider>
+          <ReactQueryDevtools initialIsOpen={false} />
         </QueryClientProvider>
         <ScrollRestoration />
         <Scripts />
@@ -84,19 +103,30 @@ export function Layout({ children }: { children: React.ReactNode }) {
   );
 }
 
+function AppContent({ children }) {
+  return (
+    <>
+      <Header />
+      <main className="mb-auto">
+        {/* Remove the Suspense here to avoid nested Suspense issues */}
+        {children}
+      </main>
+      <Footer />
+    </>
+  );
+}
+
 export function HydrateFallback() {
   return <LoadingOverlay isLoading={true} />;
 }
 
-export default function Root() {
-  return (
-    <Suspense fallback={<LoadingOverlay isLoading={true} />}>
-      <Outlet />
-    </Suspense>
-  );
+export default function App() {
+  const location = useLocation();
+  // Add key to force clean remounts
+  return <Outlet key={location.pathname} />;
 }
 
-export function ErrorBoundary({ error }: { error: unknown }) {
+export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   let message = 'Oops!';
   let details = 'An unexpected error occurred.';
   let stack: string | undefined;
@@ -107,7 +137,7 @@ export function ErrorBoundary({ error }: { error: unknown }) {
       error.status === 404
         ? 'The requested page could not be found.'
         : error.statusText || details;
-  } else if (import.meta.env.DEV && error instanceof Error) {
+  } else if (import.meta.env.DEV && error && error instanceof Error) {
     details = error.message;
     stack = error.stack;
   }

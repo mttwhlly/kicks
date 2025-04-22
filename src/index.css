@@ -1,20 +1,18 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@layer theme, base, components, utilities;
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities);
+/* The following line is needed to override Material UI Component styles with Tailwind classes */
+@import 'tailwindcss' important;
 
-/* Gradient backgrounds */
-.bg-linear-180 {
-  background-image: linear-gradient(180deg, var(--tw-gradient-stops));
+/* Fix for React Router transitions interfering 
+or being interfered with by other DOM manipulations */
+
+[data-router-transition='active'] {
+  isolation: isolate;
+  position: relative;
+  z-index: 1;
 }
 
-/* Custom transitions */
-.transition-all {
-  transition-property: all;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 150ms;
-}
-
-/* Utility classes */
-.max-h-svh {
-  max-height: 100svh;
+[data-router-transition='inactive'] {
+  display: none;
 }

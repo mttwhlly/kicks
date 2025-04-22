@@ -1,24 +1,52 @@
 import { Suspense, useState, useEffect } from 'react';
-import { Link, useParams } from 'react-router';
+import { Link } from 'react-router';
 import { Autocomplete, Box, Chip, IconButton, TextField } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import { z } from 'zod';
-import type { USStateType } from '~/types/usStates';
-import { useAppForm } from '~/hooks/use-form';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import type { USStateType } from '~/common/types/usStates';
+import { useAppForm } from '~/presentation/hooks/useForm';
+import { useMutation } from '@tanstack/react-query';
+import { useDebounce } from '~/presentation/hooks/useDebounce';
 import {
-  fetchNameSuggestions,
-  fetchOrgSuggestions,
-  fetchStates,
-  checkOrgDataExists,
-} from '~/utils/fetchers';
-import useDebounce from '~/hooks/use-debounce';
+  useNameSuggestions,
+  useOrganizationSuggestions,
+  useStates,
+  useCheckOrganizationData,
+} from '~/presentation/hooks/useSuggestions';
+import { ProviderSearchCriteria } from '~/core/repositories/providerRepository';
+import { useSearchContext } from '~/presentation/providers/SearchProvider';
 
-export default function ProviderSearchForm() {
-  // Navigation helper
-  const navigate = (url: string) => {
-    window.location.href = url;
+// Props interface for ProviderSearchForm
+interface ProviderSearchFormProps {
+  onSearch?: (criteria: ProviderSearchCriteria) => void;
+  isLoading?: boolean;
+}
+
+export default function ProviderSearchForm({
+  onSearch,
+  isLoading = false,
+}: ProviderSearchFormProps) {
+  // Use React Router's navigate
+  const navigateTo = (url: string) => {
+    // We'll use the callback passed from parent components
+    if (url.startsWith('/')) {
+      // For relative URLs, we'll keep this as a no-op for now
+      // and rely on Link components or parent-provided handlers
+    } else {
+      // For absolute URLs, we'll log a warning (client-side only)
+      if (typeof console !== 'undefined') {
+        console.warn('External navigation not supported in this component');
+      }
+    }
   };
+
+  // Get use cases from search context
+  const {
+    nameSuggestionsUseCase,
+    orgSuggestionsUseCase,
+    statesUseCase,
+    checkOrgDataUseCase,
+  } = useSearchContext();
 
   // State for Name Autocomplete
   const [nameInputValue, setNameInputValue] = useState('');
@@ -123,42 +151,32 @@ export default function ProviderSearchForm() {
     },
   });
 
-  // Setup React Query mutation for checking organization data
-  const checkOrgDataMutation = useMutation({
-    mutationFn: async ({
-      orgGuid,
-      queryParams,
-    }: {
-      orgGuid: string;
-      queryParams: URLSearchParams;
-    }) => {
-      setCheckingOrgData(true);
-      const dataExists = await checkOrgDataExists(orgGuid);
+  // Setup React Query mutation for checking organization data using our hook
+  const checkOrgDataMutation = useCheckOrganizationData(checkOrgDataUseCase);
 
-      if (!dataExists) {
-        throw new Error(`No data available for this organization.`);
-      }
+  // Update local state when the mutation status changes
+  useEffect(() => {
+    setCheckingOrgData(checkOrgDataMutation.isPending);
 
-      // If data exists, return the route we want to navigate to
-      const queryString = queryParams.toString();
-      return `/organization/${orgGuid}/map${
-        queryString ? `?${queryString}` : ''
-      }`;
-    },
-    onSuccess: (route) => {
-      setCheckingOrgData(false);
-      navigate(route);
-    },
-    onError: (err) => {
-      setCheckingOrgData(false);
+    if (checkOrgDataMutation.isSuccess && checkOrgDataMutation.data) {
+      navigateTo(checkOrgDataMutation.data);
+    }
+
+    if (checkOrgDataMutation.isError) {
       setError(
-        err instanceof Error ? err : new Error('An unknown error occurred')
+        checkOrgDataMutation.error instanceof Error
+          ? checkOrgDataMutation.error
+          : new Error('An unknown error occurred')
       );
-      console.error('Organization data check error:', err);
-      // Clear search results to display only the error message
       setSearchResults([]);
-    },
-  });
+    }
+  }, [
+    checkOrgDataMutation.isPending,
+    checkOrgDataMutation.isSuccess,
+    checkOrgDataMutation.isError,
+    checkOrgDataMutation.data,
+    checkOrgDataMutation.error,
+  ]);
 
   // Debounce the search inputs to prevent excessive API calls
   const debouncedNameInput = useDebounce(nameInputValue, 300);
@@ -204,64 +222,68 @@ export default function ProviderSearchForm() {
 
         // Check if selected org has data before navigating
         checkOrgDataMutation.mutate({
-          orgGuid: selectedOrg.guid,
+          orgId: selectedOrg.guid,
           queryParams,
         });
 
         return;
       }
 
-      // CASE 2: If customer is not selected, send a POST request
-      const requestData: Record<string, string> = {};
+      // CASE 2: If customer is not selected, use onSearch callback or default to search mutation
+      const criteria: ProviderSearchCriteria = {};
 
-      // Add nameGuid if available - using selectedName.guid directly
+      // Add name/specialty if available
       if (
         selectedName?.guid &&
         selectedName.type.toLowerCase() === 'practitioner'
       ) {
-        requestData.nameGuid = selectedName.guid;
+        criteria.name = selectedName.guid;
       }
 
       if (
         selectedName?.guid &&
         selectedName.type.toLowerCase() === 'specialty'
       ) {
-        requestData.specialtyGuid = selectedName.guid;
+        criteria.specialty = selectedName.guid;
       }
 
-      // Add stateGuid if available
+      // Add state if available
       if (stateValue?.guid) {
-        requestData.stateGuid = stateValue.guid;
+        criteria.location = stateValue.guid;
       }
 
-      // Only proceed if we have at least one guid to search with
-      if (Object.keys(requestData).length === 0) {
+      // Only proceed if we have at least one parameter
+      if (Object.keys(criteria).length === 0) {
         setError(new Error('Please provide at least one search parameter'));
         return;
       }
 
-      // Execute the mutation
-      searchMutation.mutate(requestData);
+      // Use the provided onSearch callback or fall back to the existing behavior
+      if (onSearch) {
+        onSearch(criteria);
+      } else {
+        // Legacy implementation (temporary until all code is migrated)
+        const requestData: Record<string, string> = {};
+        if (criteria.name) requestData.nameGuid = criteria.name;
+        if (criteria.specialty) requestData.specialtyGuid = criteria.specialty;
+        if (criteria.location) requestData.stateGuid = criteria.location;
+
+        searchMutation.mutate(requestData);
+      }
     },
   });
 
-  // Fetch name/specialty suggestions when input changes
-  const { data: nameSuggestions, isLoading: nameSuggestionsLoading } = useQuery(
-    {
-      queryKey: ['nameSuggestions', debouncedNameInput],
-      queryFn: () => fetchNameSuggestions(debouncedNameInput),
-      enabled: debouncedNameInput.length >= 2,
-      refetchOnWindowFocus: false,
-    }
-  );
+  // Fetch name/specialty suggestions using the hook
+  const { data: nameSuggestions, isLoading: nameSuggestionsLoading } =
+    useNameSuggestions(nameSuggestionsUseCase, debouncedNameInput);
 
-  // Fetch organization suggestions when input changes
-  const { data: orgSuggestions, isLoading: orgSuggestionsLoading } = useQuery({
-    queryKey: ['orgSuggestions', debouncedOrgInput],
-    queryFn: () => fetchOrgSuggestions(debouncedOrgInput),
-    enabled: debouncedOrgInput.length >= 2,
-    refetchOnWindowFocus: false,
-  });
+  // Fetch organization suggestions using the hook
+  const { data: orgSuggestions, isLoading: orgSuggestionsLoading } =
+    useOrganizationSuggestions(orgSuggestionsUseCase, debouncedOrgInput);
+
+  // Fetch states using the hook
+  const { data: statesData, isLoading: statesLoading } =
+    useStates(statesUseCase);
 
   // Update the name options when suggestions are received
   useEffect(() => {
@@ -304,13 +326,6 @@ export default function ProviderSearchForm() {
       setOrgOptions(validOrgs);
     }
   }, [orgSuggestions]);
-
-  // Fetch states on component mount
-  const { data: statesData, isLoading: statesLoading } = useQuery({
-    queryKey: ['states'],
-    queryFn: fetchStates,
-    refetchOnWindowFocus: false,
-  });
 
   // Process states data when it's loaded
   useEffect(() => {

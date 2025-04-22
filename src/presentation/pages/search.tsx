@@ -2,34 +2,22 @@ import { useState, useEffect, Suspense } from 'react';
 import { Box, Grid, Typography, CircularProgress } from '@mui/material';
 import { useSearchParams } from 'react-router';
 import { ProviderCard } from '../components/features/Provider/ProviderCard';
-import { ProviderSearchForm } from '../components/features/Search/ProviderSearchForm';
+import ProviderSearchForm from '../components/features/Search/ProviderSearchForm';
 import { SearchSkeleton } from '../components/ui/Skeletons';
 import { ProviderSearchCriteria } from '../../core/repositories/providerRepository';
 import { useProviderSearch } from '../hooks/useProviders';
-import { SearchProvidersUseCase } from '../../core/usecases/searchProviders';
-import { ApiProviderRepository } from '../../infrastructure/repositories/providerRepositoryImpl';
-import { ApiClient } from '../../infrastructure/api/apiClient';
+import { SearchProvider, useSearchContext } from '../providers/SearchProvider';
 
-// Initialize dependencies
-// In a real app, this would be done with dependency injection
-const apiClient = new ApiClient({
-  baseUrl: '/api',
-  timeout: 10000
-});
-const providerRepository = new ApiProviderRepository(apiClient);
-const searchProvidersUseCase = new SearchProvidersUseCase(providerRepository);
-
-/**
- * Search results page component
- */
-export default function SearchPage() {
+// Wrapper component that provides search context
+function SearchPageContent() {
+  const { searchProvidersUseCase } = useSearchContext();
   const [searchParams, setSearchParams] = useSearchParams();
   const [criteria, setCriteria] = useState<ProviderSearchCriteria>({});
-  
+
   // Extract search criteria from URL parameters
   useEffect(() => {
     const extractedCriteria: ProviderSearchCriteria = {};
-    
+
     for (const [key, value] of searchParams.entries()) {
       if (key.endsWith('[]')) {
         const arrayKey = key.slice(0, -2) as keyof ProviderSearchCriteria;
@@ -48,30 +36,31 @@ export default function SearchPage() {
         }
       }
     }
-    
+
     setCriteria(extractedCriteria);
   }, [searchParams]);
-  
+
   // Search for providers based on criteria
-  const { data: providers, isLoading, error } = useProviderSearch(
-    searchProvidersUseCase,
-    criteria
-  );
-  
+  const {
+    data: providers,
+    isLoading,
+    error,
+  } = useProviderSearch(searchProvidersUseCase, criteria);
+
   const handleSearch = (newCriteria: ProviderSearchCriteria) => {
     // Update URL parameters
     const params = new URLSearchParams();
-    
+
     Object.entries(newCriteria).forEach(([key, value]) => {
       if (value !== undefined && value !== null && value !== '') {
         if (Array.isArray(value)) {
-          value.forEach(item => params.append(`${key}[]`, item));
+          value.forEach((item) => params.append(`${key}[]`, item));
         } else {
           params.append(key, value.toString());
         }
       }
     });
-    
+
     setSearchParams(params);
   };
 
@@ -81,14 +70,11 @@ export default function SearchPage() {
         <Typography variant="h4" component="h1" className="my-6">
           Search Results
         </Typography>
-        
+
         <Box className="mb-6">
-          <ProviderSearchForm 
-            onSearch={handleSearch} 
-            isLoading={isLoading}
-          />
+          <ProviderSearchForm onSearch={handleSearch} isLoading={isLoading} />
         </Box>
-        
+
         {isLoading ? (
           <Box className="flex justify-center my-12">
             <CircularProgress />
@@ -107,7 +93,7 @@ export default function SearchPage() {
           </Box>
         ) : (
           <Grid container spacing={3}>
-            {providers?.map(provider => (
+            {providers?.map((provider) => (
               <Grid item xs={12} md={6} lg={4} key={provider.id}>
                 <ProviderCard provider={provider} />
               </Grid>
@@ -116,5 +102,16 @@ export default function SearchPage() {
         )}
       </Box>
     </Suspense>
+  );
+}
+
+/**
+ * Search results page component
+ */
+export default function SearchPage() {
+  return (
+    <SearchProvider>
+      <SearchPageContent />
+    </SearchProvider>
   );
 }
