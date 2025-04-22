@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
 import { Outlet } from 'react-router';
 import { LinearProgress } from '@mui/material';
-import { Header } from '../features/Header/Header';
+import Header from '../features/Header/Header';
 import { Footer } from '../features/Footer/Footer';
 
 interface MainLayoutProps {

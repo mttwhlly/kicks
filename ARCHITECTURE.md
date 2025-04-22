@@ -8,8 +8,8 @@ This document outlines the clean architecture approach for this React Router 7 p
 /src
 ├── core/                     # Business logic & domain models
 │   ├── domain/               # Domain entities & business rules
-│   ├── usecases/             # Application use cases & business logic
-│   └── repositories/         # Repository interfaces
+│   ├── repositories/         # Repository interfaces
+│   └── usecases/             # Application use cases & business logic
 │
 ├── infrastructure/           # Implementation of repositories & services
 │   ├── api/                  # API clients & implementation
@@ -41,21 +41,25 @@ This document outlines the clean architecture approach for this React Router 7 p
 ## Layer Responsibilities
 
 ### Core Layer
+
 - Contains business logic, domain entities, and use cases
 - Independent of frameworks and libraries
 - Defines interfaces for data access (repositories)
 
 ### Infrastructure Layer
+
 - Implements data access interfaces defined in the core layer
 - Handles external communication (API, local storage, etc.)
 - Contains third-party service integrations
 
 ### Presentation Layer
+
 - Contains all UI components and React-specific code
 - Manages UI state and user interactions
 - Organized by feature or page
 
 ### Common Layer
+
 - Contains shared utilities, constants, and types
 - Used by all other layers
 

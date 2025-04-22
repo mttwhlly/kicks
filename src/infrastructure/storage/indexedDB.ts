@@ -163,6 +163,5 @@ export class IndexedDBService {
   
   // Usage example:
   // const dbService = new IndexedDBService('myApp', 1, [
-  //   { name: 'users', keyPath: 'id' },
-  //   { name: 'products', keyPath: 'id' }
+  //   { name: 'users', keyPath: 'id' }
   // ]);

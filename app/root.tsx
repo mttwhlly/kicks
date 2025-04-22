@@ -1,4 +1,4 @@
-import { Suspense, useState } from 'react';
+import { Suspense } from 'react';
 import {
   isRouteErrorResponse,
   Links,
@@ -13,7 +13,10 @@ import createCache from '@emotion/cache';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { CssBaseline, LinearProgress } from '@mui/material';
-import { MainLayout } from './presentation/components/layouts/MainLayout';
+import { ThemeProvider } from '@mui/material/styles';
+import { theme } from '../src/presentation/themes/theme';
+import { MainLayout } from '../src/presentation/components/layouts/MainLayout';
+import '../src/index.css';
 
 export function meta() {
   return [
@@ -54,7 +57,7 @@ const LoadingOverlay = ({ isLoading }: { isLoading: boolean }) => {
 export function Layout({ children }: { children: React.ReactNode }) {
   const queryClient = new QueryClient();
   const location = useLocation();
-  const [isHomePage, setIsHomePage] = useState(location.pathname === '/');
+  const isHomePage = location.pathname === '/';
 
   return (
     <html lang="en">
@@ -64,15 +67,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Meta />
         <Links />
       </head>
-      <CssBaseline />
       <body className={`antialiased ${isHomePage ? 'bg-linear-180 from-neutral-200 to-white' : ''}`}>
         <QueryClientProvider client={queryClient}>
-          <CacheProvider value={clientSideEmotionCache}>
-            <MainLayout isHomePage={isHomePage}>
-              {children}
-            </MainLayout>
-          </CacheProvider>
-          {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
+          <ThemeProvider theme={theme}>
+            <CacheProvider value={clientSideEmotionCache}>
+              <CssBaseline />
+              <MainLayout isHomePage={isHomePage} />
+            </CacheProvider>
+            {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
+          </ThemeProvider>
         </QueryClientProvider>
         <ScrollRestoration />
         <Scripts />
@@ -85,8 +88,12 @@ export function HydrateFallback() {
   return <LoadingOverlay isLoading={true} />;
 }
 
-export default function App() {
-  return <Outlet />;
+export default function Root() {
+  return (
+    <Suspense fallback={<LoadingOverlay isLoading={true} />}>
+      <Outlet />
+    </Suspense>
+  );
 }
 
 export function ErrorBoundary({ error }: { error: unknown }) {
